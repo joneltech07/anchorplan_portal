@@ -29,6 +29,14 @@ const calendarHeaderToolbar = {
 };
 const initialView = 'dayGridMonth';
 
+const calendarOptions = computed(() => ({
+    plugins: calendarPlugins,
+    initialView,
+    events: calendarEvents.value,
+    headerToolbar: calendarHeaderToolbar,
+    height: 'auto',
+}));
+
 const form = useForm({ title: '', description: '', start_time: '', end_time: '', type: 'meeting', attendees: [] });
 
 const submitEvent = () => {
@@ -84,13 +92,7 @@ const clearForm = () => {
                 </section>
 
                 <section class="xl:col-span-2 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                    <FullCalendar
-                        :plugins="calendarPlugins"
-                        :initial-view="initialView"
-                        :events="calendarEvents"
-                        :header-toolbar="calendarHeaderToolbar"
-                        height="auto"
-                    />
+                    <FullCalendar :options="calendarOptions" />
                 </section>
             </div>
         </div>

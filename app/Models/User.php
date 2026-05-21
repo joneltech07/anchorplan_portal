@@ -6,11 +6,17 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids, HasRoles {
+        hasRole as protected hasRoleTrait;
+        hasAnyRole as protected hasAnyRoleTrait;
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -22,12 +28,16 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', // 'admin', 'manager', 'employee', 'hr', 'warehouse'
+        'role',
+        'position',
+        'department',
+        'manager_id',
         'hourly_rate',
         'monthly_salary',
-        'department',
         'is_active',
     ];
+
+    protected $guard_name = 'web';
 
     /**
      * The attributes that should be hidden for serialization.
@@ -68,26 +78,91 @@ class User extends Authenticatable
                 $user->role = 'employee';
             }
         });
+
+        static::created(function (User $user) {
+            if ($user->role) {
+                $roleName = $user->role;
+
+                Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+                $user->assignRole($roleName);
+            }
+        });
     }
 
     public static function generateEmployeeCode(): string
     {
-        $latest = static::orderByDesc('created_at')->first();
+        $maxCode = static::query()
+            ->whereNotNull('employee_code')
+            ->where('employee_code', 'like', 'EMP-%')
+            ->selectRaw("MAX(CAST(SUBSTRING(employee_code, 5) AS UNSIGNED)) as max_code")
+            ->value('max_code');
 
-        if (! $latest || ! preg_match('/EMP-(\d+)/', $latest->employee_code, $matches)) {
-            return 'EMP-001';
-        }
+        $next = $maxCode ? (int) $maxCode + 1 : 1;
 
-        $next = (int) $matches[1] + 1;
         return 'EMP-'.str_pad((string) $next, 3, '0', STR_PAD_LEFT);
     }
 
     public function hasRole(string|array $roles): bool
     {
-        if (is_array($roles)) {
-            return in_array($this->role, $roles);
+        if ($this->hasRoleTrait($roles)) {
+            return true;
         }
-        return $this->role === $roles;
+
+        return $this->matchesLegacyRole($roles);
+    }
+
+    public function hasAnyRole(string|array $roles): bool
+    {
+        if ($this->hasAnyRoleTrait($roles)) {
+            return true;
+        }
+
+        foreach ((array) $roles as $role) {
+            if ($this->matchesLegacyRole($role)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function matchesLegacyRole(string|array $roles): bool
+    {
+        $roles = Arr::flatten((array) $roles);
+
+        $legacyMap = [
+            'admin' => ['super_admin'],
+            'manager' => ['general_manager', 'department_manager', 'team_lead'],
+            'hr' => ['hr_manager'],
+            'warehouse' => ['warehouse_manager', 'warehouse_staff'],
+            'employee' => ['employee', 'field_staff', 'intern'],
+            'finance' => ['finance'],
+            'payroll_processor' => ['payroll_processor'],
+        ];
+
+        foreach ($roles as $role) {
+            if (! is_string($role)) {
+                continue;
+            }
+
+            if ($this->role === $role) {
+                return true;
+            }
+
+            if (! array_key_exists($role, $legacyMap)) {
+                continue;
+            }
+
+            if (in_array($this->role, $legacyMap[$role], true)) {
+                return true;
+            }
+
+            if ($this->hasAnyRole($legacyMap[$role])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Relationships
@@ -129,5 +204,15 @@ class User extends Authenticatable
     public function eventAttendees()
     {
         return $this->hasMany(EventAttendee::class);
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(self::class, 'manager_id');
+    }
+
+    public function subordinates()
+    {
+        return $this->hasMany(self::class, 'manager_id');
     }
 }

@@ -40,8 +40,8 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::define('manage-payroll', fn ($user) => $user->hasRole(['admin', 'hr']));
-        Gate::define('manage-tasks', fn ($user) => $user->hasRole(['admin', 'manager']));
-        Gate::define('adjust-inventory', fn ($user) => $user->hasRole(['admin', 'warehouse']));
+        Gate::define('manage-payroll', fn ($user) => $user->hasAnyRole(['super_admin', 'hr_manager', 'finance', 'payroll_processor']));
+        Gate::define('manage-tasks', fn ($user) => $user->hasAnyRole(['super_admin', 'general_manager', 'department_manager', 'team_lead']));
+        Gate::define('adjust-inventory', fn ($user) => $user->hasAnyRole(['super_admin', 'warehouse_manager', 'warehouse_staff']));
     }
 }

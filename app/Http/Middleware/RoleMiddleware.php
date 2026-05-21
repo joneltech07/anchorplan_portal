@@ -15,7 +15,7 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role, $roles)) {
+        if (! $user || (! $user->hasAnyRole($roles) && ! in_array($user->role, $roles))) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'message' => 'Unauthorized. Insufficient permissions.'

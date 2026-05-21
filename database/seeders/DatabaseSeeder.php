@@ -10,6 +10,7 @@ use App\Models\CalendarEvent;
 use App\Models\EventAttendee;
 use App\Models\Product;
 use App\Models\InventoryMovement;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -21,66 +22,176 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(RoleSeeder::class);
+
+        // Clean up any previously seeded user records to prevent duplicate employee codes.
+        User::whereIn('email', [
+            'admin@example.com',
+            'manager@example.com',
+            'employee@example.com',
+            'hr@example.com',
+            'warehouse@example.com',
+            'finance@example.com',
+            'payroll@example.com',
+            'field@example.com',
+            'intern@example.com',
+        ])->orWhereIn('employee_code', [
+            'EMP-001',
+            'EMP-002',
+            'EMP-003',
+            'EMP-004',
+            'EMP-005',
+            'EMP-006',
+            'EMP-007',
+            'EMP-008',
+            'EMP-009',
+        ])->delete();
+
         // 1. Seed Users
-        $admin = User::create([
+        $admin = User::updateOrCreate([
+            'email' => 'admin@example.com',
+        ], [
             'employee_code' => 'EMP-001',
             'name' => 'John Admin',
-            'email' => 'admin@example.com',
             'password' => Hash::make('password'),
-            'role' => 'admin',
+            'role' => 'super_admin',
+            'position' => 'Chief Executive Officer',
             'hourly_rate' => 50.00,
             'monthly_salary' => 8000.00,
             'department' => 'Executive',
             'is_active' => true,
         ]);
 
-        $manager = User::create([
+        $manager = User::updateOrCreate([
+            'email' => 'manager@example.com',
+        ], [
             'employee_code' => 'EMP-002',
             'name' => 'Jane Manager',
-            'email' => 'manager@example.com',
             'password' => Hash::make('password'),
-            'role' => 'manager',
+            'role' => 'department_manager',
+            'position' => 'Engineering Manager',
+            'department' => 'Engineering',
             'hourly_rate' => 40.00,
             'monthly_salary' => 6000.00,
-            'department' => 'Engineering',
             'is_active' => true,
         ]);
 
-        $employee = User::create([
+        $employee = User::updateOrCreate([
+            'email' => 'employee@example.com',
+        ], [
             'employee_code' => 'EMP-003',
             'name' => 'Bob Employee',
-            'email' => 'employee@example.com',
             'password' => Hash::make('password'),
             'role' => 'employee',
-            'hourly_rate' => 25.00, // Hourly paid
-            'monthly_salary' => 0.00,
+            'position' => 'Software Engineer',
             'department' => 'Engineering',
+            'hourly_rate' => 25.00,
+            'monthly_salary' => 0.00,
             'is_active' => true,
         ]);
 
-        $hr = User::create([
+        $hr = User::updateOrCreate([
+            'email' => 'hr@example.com',
+        ], [
             'employee_code' => 'EMP-004',
             'name' => 'Alice HR',
-            'email' => 'hr@example.com',
             'password' => Hash::make('password'),
-            'role' => 'hr',
+            'role' => 'hr_manager',
+            'position' => 'HR Manager',
+            'department' => 'Human Resources',
             'hourly_rate' => 30.00,
             'monthly_salary' => 4500.00,
-            'department' => 'Human Resources',
             'is_active' => true,
         ]);
 
-        $warehouse = User::create([
+        $warehouse = User::updateOrCreate([
+            'email' => 'warehouse@example.com',
+        ], [
             'employee_code' => 'EMP-005',
             'name' => 'Charlie Warehouse',
-            'email' => 'warehouse@example.com',
             'password' => Hash::make('password'),
-            'role' => 'warehouse',
+            'role' => 'warehouse_manager',
+            'position' => 'Warehouse Manager',
+            'department' => 'Logistics',
             'hourly_rate' => 20.00,
             'monthly_salary' => 3500.00,
-            'department' => 'Logistics',
             'is_active' => true,
         ]);
+
+        $finance = User::updateOrCreate([
+            'email' => 'finance@example.com',
+        ], [
+            'employee_code' => 'EMP-006',
+            'name' => 'Fiona Finance',
+            'password' => Hash::make('password'),
+            'role' => 'finance',
+            'position' => 'Finance Specialist',
+            'department' => 'Finance',
+            'hourly_rate' => 45.00,
+            'monthly_salary' => 7000.00,
+            'is_active' => true,
+        ]);
+
+        $payroll = User::updateOrCreate([
+            'email' => 'payroll@example.com',
+        ], [
+            'employee_code' => 'EMP-007',
+            'name' => 'Peter Payroll',
+            'password' => Hash::make('password'),
+            'role' => 'payroll_processor',
+            'position' => 'Payroll Processor',
+            'department' => 'Finance',
+            'hourly_rate' => 40.00,
+            'monthly_salary' => 6500.00,
+            'is_active' => true,
+        ]);
+
+        $fieldStaff = User::updateOrCreate([
+            'email' => 'field@example.com',
+        ], [
+            'employee_code' => 'EMP-008',
+            'name' => 'Frank Field',
+            'password' => Hash::make('password'),
+            'role' => 'field_staff',
+            'position' => 'Field Technician',
+            'department' => 'Operations',
+            'hourly_rate' => 22.00,
+            'monthly_salary' => 0.00,
+            'is_active' => true,
+        ]);
+
+        $intern = User::updateOrCreate([
+            'email' => 'intern@example.com',
+        ], [
+            'employee_code' => 'EMP-009',
+            'name' => 'Ian Intern',
+            'password' => Hash::make('password'),
+            'role' => 'intern',
+            'position' => 'Engineering Intern',
+            'department' => 'Engineering',
+            'hourly_rate' => 15.00,
+            'monthly_salary' => 0.00,
+            'is_active' => true,
+        ]);
+
+        // manager hierarchy
+        $manager->manager_id = $admin->id;
+        $manager->save();
+
+        $employee->manager_id = $manager->id;
+        $employee->save();
+
+        $hr->manager_id = $admin->id;
+        $hr->save();
+
+        $warehouse->manager_id = $admin->id;
+        $warehouse->save();
+
+        $fieldStaff->manager_id = $manager->id;
+        $fieldStaff->save();
+
+        $intern->manager_id = $manager->id;
+        $intern->save();
 
         // 2. Seed Attendance Records for Employee (last 7 days)
         $today = Carbon::today();
