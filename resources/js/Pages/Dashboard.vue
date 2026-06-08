@@ -1,52 +1,103 @@
-<script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+<script setup lang="ts">
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { Clock, CreditCard, ListTodo, Calendar, Package, UserMinus } from '@lucide/vue';
+
+declare const route: any;
 </script>
 
 <template>
     <Head title="Dashboard" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Dashboard
-            </h2>
-        </template>
+        <div class="flex h-full flex-1 flex-col gap-6 p-6">
+            <!-- Grid Layout matching Laravel 13 aesthetic with real portal card content -->
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                
+                <!-- Attendance Card -->
+                <Link :href="route('attendance.index')" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-xs transition-all hover:shadow-md hover:border-sidebar-accent dark:border-sidebar-border dark:bg-zinc-900/50">
+                    <div class="flex items-center gap-4">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 transition-colors group-hover:bg-neutral-900 group-hover:text-white dark:bg-zinc-800 dark:text-neutral-100 dark:group-hover:bg-white dark:group-hover:text-black">
+                            <Clock class="size-5" />
+                        </div>
+                        <h3 class="font-semibold text-foreground">Attendance</h3>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-2xl font-bold text-foreground">Track check-ins</p>
+                        <p class="mt-2 text-sm text-muted-foreground">Clock in/out with GPS and view your attendance history.</p>
+                    </div>
+                </Link>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                        <h3 class="text-sm font-semibold text-gray-500">Attendance</h3>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-gray-100">Track check-ins and late status</p>
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Clock in/out with GPS and view your attendance history.</p>
+                <!-- Payroll Card -->
+                <Link :href="route('payroll.index')" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-xs transition-all hover:shadow-md hover:border-sidebar-accent dark:border-sidebar-border dark:bg-zinc-900/50">
+                    <div class="flex items-center gap-4">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 transition-colors group-hover:bg-neutral-900 group-hover:text-white dark:bg-zinc-800 dark:text-neutral-100 dark:group-hover:bg-white dark:group-hover:text-black">
+                            <CreditCard class="size-5" />
+                        </div>
+                        <h3 class="font-semibold text-foreground">Payroll</h3>
                     </div>
-                    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                        <h3 class="text-sm font-semibold text-gray-500">Payroll</h3>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-gray-100">Manage pay periods</p>
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Generate payroll periods, calculate hours, and export CSV.</p>
+                    <div class="mt-4">
+                        <p class="text-2xl font-bold text-foreground">Manage periods</p>
+                        <p class="mt-2 text-sm text-muted-foreground">Generate payroll periods, calculate hours, and export CSV.</p>
                     </div>
-                    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                        <h3 class="text-sm font-semibold text-gray-500">Tasks</h3>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-gray-100">Kanban work board</p>
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Assign work, change status, and collaborate with comments.</p>
+                </Link>
+
+                <!-- Tasks Card -->
+                <Link :href="route('tasks.index')" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-xs transition-all hover:shadow-md hover:border-sidebar-accent dark:border-sidebar-border dark:bg-zinc-900/50">
+                    <div class="flex items-center gap-4">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 transition-colors group-hover:bg-neutral-900 group-hover:text-white dark:bg-zinc-800 dark:text-neutral-100 dark:group-hover:bg-white dark:group-hover:text-black">
+                            <ListTodo class="size-5" />
+                        </div>
+                        <h3 class="font-semibold text-foreground">Tasks</h3>
                     </div>
-                    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                        <h3 class="text-sm font-semibold text-gray-500">Calendar</h3>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-gray-100">Events and attendance</p>
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Create events, invite attendees, and visualize schedules.</p>
+                    <div class="mt-4">
+                        <p class="text-2xl font-bold text-foreground">Kanban board</p>
+                        <p class="mt-2 text-sm text-muted-foreground">Assign work, change status, and collaborate with comments.</p>
                     </div>
-                    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                        <h3 class="text-sm font-semibold text-gray-500">Inventory</h3>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-gray-100">Stock control</p>
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Record inbound/outbound movements and monitor low-stock items.</p>
+                </Link>
+
+                <!-- Calendar Card -->
+                <Link :href="route('calendar.index')" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-xs transition-all hover:shadow-md hover:border-sidebar-accent dark:border-sidebar-border dark:bg-zinc-900/50">
+                    <div class="flex items-center gap-4">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 transition-colors group-hover:bg-neutral-900 group-hover:text-white dark:bg-zinc-800 dark:text-neutral-100 dark:group-hover:bg-white dark:group-hover:text-black">
+                            <Calendar class="size-5" />
+                        </div>
+                        <h3 class="font-semibold text-foreground">Calendar</h3>
                     </div>
-                    <div class="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-                        <h3 class="text-sm font-semibold text-gray-500">Leave Requests</h3>
-                        <p class="mt-4 text-3xl font-bold text-gray-900 dark:text-gray-100">Request approvals</p>
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Submit leave requests and route approvals for HR and management.</p>
+                    <div class="mt-4">
+                        <p class="text-2xl font-bold text-foreground">Events</p>
+                        <p class="mt-2 text-sm text-muted-foreground">Create events, invite attendees, and visualize schedules.</p>
                     </div>
-                </div>
+                </Link>
+
+                <!-- Inventory Card -->
+                <Link :href="route('inventory.index')" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-xs transition-all hover:shadow-md hover:border-sidebar-accent dark:border-sidebar-border dark:bg-zinc-900/50">
+                    <div class="flex items-center gap-4">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 transition-colors group-hover:bg-neutral-900 group-hover:text-white dark:bg-zinc-800 dark:text-neutral-100 dark:group-hover:bg-white dark:group-hover:text-black">
+                            <Package class="size-5" />
+                        </div>
+                        <h3 class="font-semibold text-foreground">Inventory</h3>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-2xl font-bold text-foreground">Stock control</p>
+                        <p class="mt-2 text-sm text-muted-foreground">Record inbound/outbound movements and monitor low-stock items.</p>
+                    </div>
+                </Link>
+
+                <!-- Leave Requests Card -->
+                <Link :href="route('leave.index')" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-xs transition-all hover:shadow-md hover:border-sidebar-accent dark:border-sidebar-border dark:bg-zinc-900/50">
+                    <div class="flex items-center gap-4">
+                        <div class="flex size-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 transition-colors group-hover:bg-neutral-900 group-hover:text-white dark:bg-zinc-800 dark:text-neutral-100 dark:group-hover:bg-white dark:group-hover:text-black">
+                            <UserMinus class="size-5" />
+                        </div>
+                        <h3 class="font-semibold text-foreground">Leave Requests</h3>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-2xl font-bold text-foreground">Approvals</p>
+                        <p class="mt-2 text-sm text-muted-foreground">Submit leave requests and route approvals for HR and management.</p>
+                    </div>
+                </Link>
+
             </div>
         </div>
     </AuthenticatedLayout>
