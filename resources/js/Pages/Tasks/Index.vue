@@ -43,7 +43,7 @@ const submitTask = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Create task</p>
@@ -55,35 +55,35 @@ const submitTask = () => {
                     </div>
 
                     <div class="mt-6 grid gap-4 lg:grid-cols-2">
-                        <input v-model="form.title" placeholder="Task title" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                        <input v-model="form.title" placeholder="Task title" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
 
-                        <select v-model="form.assigned_to" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+                        <select v-model="form.assigned_to" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
                             <option value="">Assign to</option>
                             <option v-for="member in props.team" :key="member.id" :value="member.id">{{ member.name }} — {{ member.role }}</option>
                         </select>
 
-                        <select v-model="form.priority" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+                        <select v-model="form.priority" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
                             <option value="critical">Critical</option>
                         </select>
 
-                        <input v-model="form.due_date" type="date" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                        <input v-model="form.due_date" type="date" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
 
-                        <textarea v-model="form.description" placeholder="Task description" class="col-span-full min-h-[120px] rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"></textarea>
+                        <textarea v-model="form.description" placeholder="Task description" class="col-span-full min-h-[120px] rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"></textarea>
                     </div>
                 </section>
 
                 <section class="grid gap-4 xl:grid-cols-4">
-                    <div v-for="column in columns" :key="column.key" class="rounded-[28px] border border-border bg-card p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                    <div v-for="column in columns" :key="column.key" class="rounded-[28px] border border-border bg-card p-4 shadow-sm">
                         <div class="mb-4 flex items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-foreground">{{ column.label }}</h3>
                             <span :class="column.color + ' rounded-full px-2 py-1 text-xs font-semibold'">{{ grouped[column.key].length }}</span>
                         </div>
                         <draggable v-model="grouped[column.key]" item-key="id">
                             <template #item="{ element }">
-                                <div class="mb-4 rounded-3xl border border-border bg-muted p-4 dark:border-slate-800 dark:bg-slate-900">
+                                <div class="mb-4 rounded-3xl border border-border bg-muted p-4">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <h4 class="font-semibold text-foreground">{{ element.title }}</h4>

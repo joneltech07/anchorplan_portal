@@ -73,7 +73,7 @@ const todayStatus = computed(() => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                     <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
                         <div class="space-y-3">
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Today</p>
@@ -103,17 +103,17 @@ const todayStatus = computed(() => {
                 </section>
 
                 <div class="grid gap-6 xl:grid-cols-3">
-                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                         <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Current status</p>
                         <div class="mt-4 space-y-3">
                             <p class="text-3xl font-semibold text-foreground">{{ todayStatus }}</p>
                             <p class="text-sm leading-6 text-muted-foreground">{{ props.todayRecord ? (props.todayRecord.status === 'late' ? 'Late arrival' : 'On time today') : 'Ready to start your shift.' }}</p>
                             <div class="grid gap-2 sm:grid-cols-2">
-                                <div class="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground dark:bg-slate-900/60 dark:text-slate-300">
+                                <div class="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
                                     <p class="font-medium text-foreground">Clock In</p>
                                     <p class="mt-1">{{ props.todayRecord?.clock_in_time ?? '—' }}</p>
                                 </div>
-                                <div class="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground dark:bg-slate-900/60 dark:text-slate-300">
+                                <div class="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
                                     <p class="font-medium text-foreground">Clock Out</p>
                                     <p class="mt-1">{{ props.todayRecord?.clock_out_time ?? '—' }}</p>
                                 </div>
@@ -121,7 +121,7 @@ const todayStatus = computed(() => {
                         </div>
                     </section>
 
-                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950 xl:col-span-2">
+                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm xl:col-span-2">
                         <div class="flex items-center justify-between gap-4">
                             <div>
                                 <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Points</p>
@@ -130,11 +130,11 @@ const todayStatus = computed(() => {
                             <p class="text-sm text-muted-foreground">Your location is captured if permitted by the browser.</p>
                         </div>
                         <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl border border-border bg-muted p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="rounded-2xl border border-border bg-muted p-4">
                                 <p class="text-sm font-medium text-foreground">Today&apos;s shift</p>
                                 <p class="mt-3 text-sm leading-6 text-muted-foreground">{{ props.todayRecord ? (props.todayRecord.status === 'late' ? 'Late arrival recorded' : 'On schedule') : 'Use the buttons to start or end your day.' }}</p>
                             </div>
-                            <div class="rounded-2xl border border-border bg-muted p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="rounded-2xl border border-border bg-muted p-4">
                                 <p class="text-sm font-medium text-foreground">Attendance note</p>
                                 <p class="mt-3 text-sm leading-6 text-muted-foreground">{{ props.todayRecord ? 'Shift details are saved automatically.' : 'Make sure location access is enabled.' }}</p>
                             </div>
@@ -143,13 +143,13 @@ const todayStatus = computed(() => {
                 </div>
 
                 <div class="grid gap-6 xl:grid-cols-2">
-                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                         <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Last 7 days</p>
                         <div class="mt-5 space-y-4">
                             <div
                                 v-for="record in props.history"
                                 :key="record.id"
-                                class="rounded-3xl border border-border bg-muted p-4 dark:border-slate-800 dark:bg-slate-900"
+                                class="rounded-3xl border border-border bg-muted p-4"
                             >
                                 <div class="flex items-center justify-between gap-3">
                                     <div>
@@ -162,13 +162,13 @@ const todayStatus = computed(() => {
                         </div>
                     </section>
 
-                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                    <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                         <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Team attendance</p>
                         <div class="mt-5 grid gap-4 sm:grid-cols-2">
                             <div
                                 v-for="employee in props.teamEmployees"
                                 :key="employee.id"
-                                class="rounded-3xl border border-border bg-muted p-4 dark:border-slate-800 dark:bg-slate-900"
+                                class="rounded-3xl border border-border bg-muted p-4"
                             >
                                 <p class="font-semibold text-foreground">{{ employee.name }}</p>
                                 <p class="mt-1 text-sm text-muted-foreground">{{ employee.role }}</p>
