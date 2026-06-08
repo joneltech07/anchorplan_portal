@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import {
     LayoutGrid,
     Clock,
+    BookOpen,
     CreditCard,
     ListTodo,
     Calendar,
@@ -52,6 +53,11 @@ const mainNavItems: NavItem[] = [
         title: 'Calendar',
         href: route('calendar.index'),
         icon: Calendar,
+    },
+    {
+        title: 'EOD',
+        href: route('eod.index'),
+        icon: BookOpen,
     },
     {
         title: 'Inventory',

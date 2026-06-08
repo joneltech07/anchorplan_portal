@@ -49,4 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/leave-requests/{leaveRequest}/reject', [LeaveRequestApiController::class, 'reject']);
 
     Route::get('/users/search', [UserApiController::class, 'search']);
+
+    // EOD API
+    Route::get('/eod/today', [\App\Http\Controllers\Api\v1\EodApiController::class, 'today']);
+    Route::post('/eod', [\App\Http\Controllers\Api\v1\EodApiController::class, 'store']);
+    Route::put('/eod/{id}', [\App\Http\Controllers\Api\v1\EodApiController::class, 'update']);
+    Route::get('/eod/team', [\App\Http\Controllers\Api\v1\EodApiController::class, 'team']);
+    Route::get('/eod/compliance', [\App\Http\Controllers\Api\v1\EodApiController::class, 'compliance']);
 });

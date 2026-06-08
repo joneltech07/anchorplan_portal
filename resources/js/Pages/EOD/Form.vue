@@ -1,0 +1,36 @@
+<script setup>
+import { ref } from 'vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+
+const form = useForm({ report_date: new Date().toISOString().slice(0,10), accomplishments: '', tomorrow_plan: '', blockers: '', hours_logged: '', task_ids_completed: [], mood_rating: 3 });
+
+const submit = () => {
+    form.post(route('eod.store'));
+};
+</script>
+
+<template>
+    <Head title="Create EOD" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-xl font-semibold leading-tight text-foreground">Submit End of Day</h2>
+        </template>
+
+        <div class="py-12">
+            <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900">
+                    <div class="space-y-4">
+                        <textarea v-model="form.accomplishments" placeholder="Accomplishments" class="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground"></textarea>
+                        <textarea v-model="form.tomorrow_plan" placeholder="Plan for tomorrow" class="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground"></textarea>
+                        <textarea v-model="form.blockers" placeholder="Blockers" class="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground"></textarea>
+                        <div class="flex gap-3">
+                            <button @click.prevent="submit" class="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Submit</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>

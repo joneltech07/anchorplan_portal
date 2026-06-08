@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\LeaveController;
 use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Web\TaskController;
+use App\Http\Controllers\EodReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -56,6 +57,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // EOD routes
+    Route::get('/eod', [EodReportController::class, 'index'])->name('eod.index');
+    Route::get('/eod/create', [EodReportController::class, 'create'])->name('eod.create');
+    Route::post('/eod', [EodReportController::class, 'store'])->name('eod.store');
+    Route::get('/eod/{eodReport}', [EodReportController::class, 'show'])->name('eod.show');
+    Route::get('/eod/{eodReport}/edit', [EodReportController::class, 'edit'])->name('eod.edit');
+    Route::put('/eod/{eodReport}', [EodReportController::class, 'update'])->name('eod.update');
+    Route::post('/eod/{eodReport}/review', [EodReportController::class, 'review'])->name('eod.review');
+
+    Route::get('/eod/team', [EodReportController::class, 'teamView'])->name('eod.team');
+    Route::get('/eod/gm', [EodReportController::class, 'gmView'])->name('eod.gm');
+    Route::get('/eod/hr', [EodReportController::class, 'hrView'])->name('eod.hr');
 });
 
 require __DIR__.'/auth.php';
