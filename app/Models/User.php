@@ -54,6 +54,10 @@ class User extends Authenticatable
         'hourly_rate',
         'monthly_salary',
         'is_active',
+        'supports_executive_id',
+        'employment_type',
+        'contract_start_date',
+        'contract_end_date',
     ];
 
     protected $guard_name = 'web';
@@ -83,6 +87,8 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'hourly_rate' => 'decimal:2',
             'monthly_salary' => 'decimal:2',
+            'contract_start_date' => 'date',
+            'contract_end_date' => 'date',
         ];
     }
 
@@ -235,5 +241,15 @@ class User extends Authenticatable
     public function subordinates()
     {
         return $this->hasMany(self::class, 'manager_id');
+    }
+
+    public function supportedExecutive()
+    {
+        return $this->belongsTo(self::class, 'supports_executive_id');
+    }
+
+    public function assistants()
+    {
+        return $this->hasMany(self::class, 'supports_executive_id');
     }
 }

@@ -6,6 +6,17 @@ import PrimaryButton from '@/components/PrimaryButton.vue';
 import TextInput from '@/components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
+const props = defineProps({
+    isAdminRegister: {
+        type: Boolean,
+        default: false
+    },
+    executives: {
+        type: Array,
+        default: () => []
+    }
+});
+
 const form = useForm({
     last_name: '',
     first_name: '',
@@ -29,10 +40,18 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
+    // EA & extra fields
+    role: 'employee',
+    position: '',
+    supports_executive_id: '',
+    employment_type: 'full_time',
+    contract_start_date: '',
+    contract_end_date: '',
 });
 
 const submit = () => {
-    form.post(route('register'), {
+    const targetRoute = props.isAdminRegister ? route('admin.employees.store') : route('register');
+    form.post(targetRoute, {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -294,7 +313,7 @@ const submit = () => {
 
                     <section class="rounded-3xl border border-border bg-muted p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-950">
                         <h2 class="text-lg font-semibold text-white">Employment details</h2>
-                        <p class="mt-1 text-sm text-muted-foreground">Track your start date and employment status.</p>
+                        <p class="mt-1 text-sm text-muted-foreground">Track start date, status, role, and position details.</p>
 
                         <div class="mt-6 grid gap-4 md:grid-cols-2">
                             <div>
@@ -322,6 +341,102 @@ const submit = () => {
                                     <option>Part Time</option>
                                 </select>
                                 <InputError class="mt-2" :message="form.errors.employee_status" />
+                            </div>
+                        </div>
+
+                        <!-- Role & Position -->
+                        <div class="mt-4 grid gap-4 md:grid-cols-2">
+                            <div v-if="props.isAdminRegister">
+                                <InputLabel for="role" value="Role" />
+                                <select
+                                    id="role"
+                                    class="mt-1 block w-full rounded-2xl border border-border bg-muted px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-sidebar-border dark:bg-zinc-950 dark:text-foreground"
+                                    v-model="form.role"
+                                    required
+                                >
+                                    <option value="employee">Employee</option>
+                                    <option value="executive_assistant">Executive Assistant</option>
+                                    <option value="department_manager">Department Manager</option>
+                                    <option value="general_manager">General Manager</option>
+                                    <option value="hr_manager">HR Manager</option>
+                                    <option value="warehouse_manager">Warehouse Manager</option>
+                                    <option value="finance">Finance Specialist</option>
+                                    <option value="payroll_processor">Payroll Processor</option>
+                                </select>
+                                <InputError class="mt-2" :message="form.errors.role" />
+                            </div>
+
+                            <div>
+                                <InputLabel for="position" value="Job Position" />
+                                <TextInput
+                                    id="position"
+                                    type="text"
+                                    class="mt-1"
+                                    v-model="form.position"
+                                    required
+                                    placeholder="e.g., Software Engineer, Executive Assistant to CEO"
+                                />
+                                <InputError class="mt-2" :message="form.errors.position" />
+                            </div>
+                        </div>
+
+                        <!-- EA Specific Fields -->
+                        <div v-if="props.isAdminRegister && form.role === 'executive_assistant'" class="mt-4 grid gap-4 md:grid-cols-2 border-t border-border/50 pt-4 dark:border-zinc-800">
+                            <div>
+                                <InputLabel for="supports_executive_id" value="Supports Executive" />
+                                <select
+                                    id="supports_executive_id"
+                                    class="mt-1 block w-full rounded-2xl border border-border bg-muted px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-sidebar-border dark:bg-zinc-950 dark:text-foreground"
+                                    v-model="form.supports_executive_id"
+                                    required
+                                >
+                                    <option value="">Select Executive</option>
+                                    <option v-for="exec in props.executives" :key="exec.id" :value="exec.id">
+                                        {{ exec.name }} ({{ exec.position }})
+                                    </option>
+                                </select>
+                                <InputError class="mt-2" :message="form.errors.supports_executive_id" />
+                            </div>
+
+                            <div>
+                                <InputLabel for="employment_type" value="Employment Type" />
+                                <select
+                                    id="employment_type"
+                                    class="mt-1 block w-full rounded-2xl border border-border bg-muted px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-sidebar-border dark:bg-zinc-950 dark:text-foreground"
+                                    v-model="form.employment_type"
+                                    required
+                                >
+                                    <option value="full_time">Full Time</option>
+                                    <option value="part_time">Part Time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="intern">Intern</option>
+                                </select>
+                                <InputError class="mt-2" :message="form.errors.employment_type" />
+                            </div>
+                        </div>
+
+                        <!-- Contract Dates -->
+                        <div v-if="props.isAdminRegister" class="mt-4 grid gap-4 md:grid-cols-2">
+                            <div>
+                                <InputLabel for="contract_start_date" value="Contract Start Date" />
+                                <TextInput
+                                    id="contract_start_date"
+                                    type="date"
+                                    class="mt-1"
+                                    v-model="form.contract_start_date"
+                                />
+                                <InputError class="mt-2" :message="form.errors.contract_start_date" />
+                            </div>
+
+                            <div>
+                                <InputLabel for="contract_end_date" value="Contract End Date" />
+                                <TextInput
+                                    id="contract_end_date"
+                                    type="date"
+                                    class="mt-1"
+                                    v-model="form.contract_end_date"
+                                />
+                                <InputError class="mt-2" :message="form.errors.contract_end_date" />
                             </div>
                         </div>
                     </section>
@@ -373,6 +488,7 @@ const submit = () => {
 
                         <div class="mt-6 flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
                             <Link
+                                v-if="!props.isAdminRegister"
                                 :href="route('login')"
                                 class="rounded-md text-sm text-muted-foreground underline hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-muted-foreground dark:hover:text-white dark:focus:ring-offset-zinc-900"
                             >

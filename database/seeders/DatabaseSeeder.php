@@ -24,7 +24,31 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RoleSeeder::class);
 
-        // Clean up any previously seeded user records to prevent duplicate employee codes.
+        // Seed EA Permissions
+        $eaPermissions = [
+            'view_executive_calendar',
+            'manage_executive_calendar',
+            'view_team_eod',
+            'create_tasks_for_executive',
+            'take_meeting_minutes',
+        ];
+        foreach ($eaPermissions as $permission) {
+            \Spatie\Permission\Models\Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web'
+            ]);
+        }
+
+        $eaRole = \Spatie\Permission\Models\Role::where('name', 'executive_assistant')->first();
+        if ($eaRole) {
+            $eaRole->syncPermissions($eaPermissions);
+        }
+
+        $adminRole = \Spatie\Permission\Models\Role::where('name', 'super_admin')->first();
+        if ($adminRole) {
+            $adminRole->givePermissionTo($eaPermissions);
+        }
+
         User::whereIn('email', [
             'admin@example.com',
             'manager@example.com',
@@ -35,6 +59,9 @@ class DatabaseSeeder extends Seeder
             'payroll@example.com',
             'field@example.com',
             'intern@example.com',
+            'ceo@example.com',
+            'cto@example.com',
+            'ea@example.com',
         ])->orWhereIn('employee_code', [
             'EMP-001',
             'EMP-002',
@@ -45,6 +72,9 @@ class DatabaseSeeder extends Seeder
             'EMP-007',
             'EMP-008',
             'EMP-009',
+            'EMP-010',
+            'EMP-011',
+            'EMP-012',
         ])->delete();
 
         // 1. Seed Users
@@ -192,6 +222,53 @@ class DatabaseSeeder extends Seeder
 
         $intern->manager_id = $manager->id;
         $intern->save();
+
+        // Seed Executive & EA users
+        $ceo = User::updateOrCreate([
+            'email' => 'ceo@example.com',
+        ], [
+            'employee_code' => 'EMP-010',
+            'name' => 'Vincent CEO',
+            'password' => Hash::make('password'),
+            'role' => 'ceo',
+            'position' => 'Chief Executive Officer',
+            'department' => 'Executive Office',
+            'hourly_rate' => 100.00,
+            'monthly_salary' => 15000.00,
+            'is_active' => true,
+        ]);
+
+        $cto = User::updateOrCreate([
+            'email' => 'cto@example.com',
+        ], [
+            'employee_code' => 'EMP-011',
+            'name' => 'Teresa CTO',
+            'password' => Hash::make('password'),
+            'role' => 'cto',
+            'position' => 'Chief Technology Officer',
+            'department' => 'Executive Office',
+            'hourly_rate' => 90.00,
+            'monthly_salary' => 13000.00,
+            'is_active' => true,
+        ]);
+
+        $ea = User::updateOrCreate([
+            'email' => 'ea@example.com',
+        ], [
+            'employee_code' => 'EMP-012',
+            'name' => 'Emma Assistant',
+            'password' => Hash::make('password'),
+            'role' => 'executive_assistant',
+            'position' => 'Executive Assistant to CEO',
+            'department' => 'Executive Office',
+            'hourly_rate' => 35.00,
+            'monthly_salary' => 5000.00,
+            'is_active' => true,
+            'supports_executive_id' => $ceo->id,
+            'manager_id' => $ceo->id,
+            'employment_type' => 'full_time',
+            'contract_start_date' => now()->toDateString(),
+        ]);
 
         // 2. Seed Attendance Records for Employee (last 7 days)
         $today = Carbon::today();
