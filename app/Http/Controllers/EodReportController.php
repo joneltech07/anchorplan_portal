@@ -14,27 +14,23 @@ class EodReportController extends Controller
     {
         $user = $request->user();
 
-        // role-based response: basic payload
+        $reports = EodReport::where('user_id', $user->id)
+            ->with(['reviewer'])
+            ->orderBy('report_date', 'desc')
+            ->get();
+
+        $role = 'employee';
         if ($user->hasRole('hr_manager')) {
-            return Inertia::render('EOD/Dashboard', [
-                'role' => 'hr',
-            ]);
-        }
-
-        if ($user->hasRole('general_manager')) {
-            return Inertia::render('EOD/Dashboard', [
-                'role' => 'gm',
-            ]);
-        }
-
-        if ($user->hasRole('department_manager') || $user->hasRole('team_lead')) {
-            return Inertia::render('EOD/Dashboard', [
-                'role' => 'manager',
-            ]);
+            $role = 'hr';
+        } elseif ($user->hasRole('general_manager')) {
+            $role = 'gm';
+        } elseif ($user->hasRole('department_manager') || $user->hasRole('team_lead')) {
+            $role = 'manager';
         }
 
         return Inertia::render('EOD/Dashboard', [
-            'role' => 'employee',
+            'role' => $role,
+            'reports' => $reports,
         ]);
     }
 

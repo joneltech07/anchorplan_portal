@@ -14,6 +14,7 @@ class EodReport extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'id',
         'user_id',
         'report_date',
         'accomplishments',
