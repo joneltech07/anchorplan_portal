@@ -30,7 +30,7 @@ const hasPeriods = computed(() => props.periods.length > 0);
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Generate payroll period</p>
@@ -44,20 +44,20 @@ const hasPeriods = computed(() => props.periods.length > 0);
                     <form id="payroll-form" class="mt-6 grid gap-4 md:grid-cols-3" @submit.prevent="form.post(route('payroll.periods.store'))">
                         <label class="space-y-2">
                             <span class="text-sm font-medium text-foreground">Period name</span>
-                            <input v-model="form.name" type="text" placeholder="e.g. May 2026" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                            <input v-model="form.name" type="text" placeholder="e.g. May 2026" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
                         </label>
                         <label class="space-y-2">
                             <span class="text-sm font-medium text-foreground">Start date</span>
-                            <input v-model="form.start_date" type="date" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                            <input v-model="form.start_date" type="date" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
                         </label>
                         <label class="space-y-2">
                             <span class="text-sm font-medium text-foreground">End date</span>
-                            <input v-model="form.end_date" type="date" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                            <input v-model="form.end_date" type="date" class="block w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
                         </label>
                     </form>
                 </section>
 
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Payroll history</p>
@@ -67,8 +67,8 @@ const hasPeriods = computed(() => props.periods.length > 0);
                     </div>
 
                     <div v-if="props.employeeSlips.length" class="mt-6 overflow-x-auto">
-                        <table class="min-w-full divide-y divide-border text-sm dark:divide-slate-800">
-                            <thead class="bg-muted text-left text-xs uppercase tracking-[0.2em] text-muted-foreground dark:bg-slate-900">
+                        <table class="min-w-full divide-y divide-border text-sm">
+                            <thead class="bg-muted text-left text-xs uppercase tracking-[0.2em] text-muted-foreground">
                                 <tr>
                                     <th class="px-4 py-3">Period</th>
                                     <th class="px-4 py-3">Regular hours</th>
@@ -76,8 +76,8 @@ const hasPeriods = computed(() => props.periods.length > 0);
                                     <th class="px-4 py-3">Net pay</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-border dark:divide-slate-800">
-                                <tr v-for="item in props.employeeSlips" :key="item.id" class="hover:bg-muted/50 dark:hover:bg-slate-900">
+                            <tbody class="divide-y divide-border">
+                                <tr v-for="item in props.employeeSlips" :key="item.id" class="hover:bg-muted/50">
                                     <td class="px-4 py-4">{{ item.payroll_period.name }}</td>
                                     <td class="px-4 py-4">{{ item.regular_hours }}</td>
                                     <td class="px-4 py-4">{{ item.overtime_hours }}</td>
@@ -86,24 +86,24 @@ const hasPeriods = computed(() => props.periods.length > 0);
                             </tbody>
                         </table>
                     </div>
-                    <div v-else class="mt-6 rounded-3xl border border-border bg-muted p-6 text-sm text-muted-foreground dark:border-slate-800 dark:bg-slate-900">
+                    <div v-else class="mt-6 rounded-3xl border border-border bg-muted p-6 text-sm text-muted-foreground">
                         No payroll items available yet.
                     </div>
                 </section>
 
-                <section v-if="hasPeriods" class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <section v-if="hasPeriods" class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                     <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Payroll periods</p>
                     <div class="mt-5 grid gap-4 md:grid-cols-2">
-                        <div v-for="period in props.periods" :key="period.id" class="rounded-3xl border border-border bg-muted p-5 dark:border-slate-800 dark:bg-slate-900">
+                        <div v-for="period in props.periods" :key="period.id" class="rounded-3xl border border-border bg-muted p-5">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <p class="font-semibold text-foreground">{{ period.name }}</p>
                                     <p class="mt-1 text-sm text-muted-foreground">{{ period.start_date }} — {{ period.end_date }}</p>
                                 </div>
-                                <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="period.status === 'active' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-200/15 dark:text-emerald-200' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200'">{{ period.status }}</span>
+                                <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="period.status === 'active' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-200/15 dark:text-emerald-200' : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200'">{{ period.status }}</span>
                             </div>
                             <div class="mt-5 flex flex-wrap gap-2">
-                                <a :href="route('payroll.export', { id: period.id })" class="rounded-2xl bg-muted px-4 py-2 text-sm text-foreground transition hover:bg-muted/80 dark:bg-slate-900 dark:text-slate-100">Export CSV</a>
+                                <a :href="route('payroll.export', { id: period.id })" class="rounded-2xl bg-muted px-4 py-2 text-sm text-foreground transition hover:bg-muted/80">Export CSV</a>
                                 <form :action="route('payroll.calculate', { id: period.id })" method="post" class="inline-block">
                                     <input type="hidden" name="_token" :value="$page.props.csrfToken" />
                                     <button type="submit" class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500">Recalculate</button>
