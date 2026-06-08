@@ -25,6 +25,8 @@ class RoleSeeder extends Seeder
             'executive_assistant',
             'ceo',
             'cto',
+            'pastoral_lead',
+
         ];
 
         foreach ($roles as $role) {

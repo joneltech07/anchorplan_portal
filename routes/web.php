@@ -70,6 +70,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/eod/team', [EodReportController::class, 'teamView'])->name('eod.team');
     Route::get('/eod/gm', [EodReportController::class, 'gmView'])->name('eod.gm');
     Route::get('/eod/hr', [EodReportController::class, 'hrView'])->name('eod.hr');
+
+    // Spiritual Formation
+    Route::get('/spiritual', function () {
+        return Inertia::render('Spiritual/Index');
+    })->name('spiritual.index');
 });
 
 require __DIR__.'/auth.php';
+

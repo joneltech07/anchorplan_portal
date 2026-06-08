@@ -23,6 +23,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RoleSeeder::class);
+        $this->call(\Database\Seeders\SpiritualPermissionSeeder::class);
+        $this->call(\Database\Seeders\SpiritualCurrentDateSeeder::class);
+
+
 
         // Seed EA Permissions
         $eaPermissions = [

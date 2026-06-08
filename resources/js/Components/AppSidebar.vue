@@ -69,6 +69,11 @@ const mainNavItems: NavItem[] = [
         href: route('leave.index'),
         icon: UserMinus,
     },
+    {
+        title: 'Spiritual Formation',
+        href: '/spiritual',
+        icon: BookOpen,
+    },
 ];
 
 const footerNavItems: NavItem[] = [];

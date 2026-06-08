@@ -56,4 +56,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/eod/{id}', [\App\Http\Controllers\Api\v1\EodApiController::class, 'update']);
     Route::get('/eod/team', [\App\Http\Controllers\Api\v1\EodApiController::class, 'team']);
     Route::get('/eod/compliance', [\App\Http\Controllers\Api\v1\EodApiController::class, 'compliance']);
+
+    // Spiritual Formation API
+    Route::get('/spiritual/dashboard', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'dashboard']);
+
+    Route::get('/spiritual/devotional/records', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'devotionalRecords']);
+    Route::post('/spiritual/devotional/{userId}', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'updateDevotional']);
+    Route::post('/spiritual/devotional/remind/{userId}', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'remindDevotional']);
+    Route::post('/spiritual/devotional/remind-all', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'remindAll']);
+
+    Route::get('/spiritual/wednesday/records', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'wednesdayRecords']);
+    Route::post('/spiritual/wednesday/{userId}', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'updateWednesday']);
+
+    Route::get('/spiritual/sunday/records', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'sundayRecords']);
+    Route::post('/spiritual/sunday/{userId}', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'updateSunday']);
+
+    Route::get('/spiritual/ministry/stats', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'ministryStats']);
+    Route::get('/spiritual/ministry/reports', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'ministryReports']);
+
+    Route::post('/spiritual/eod-ministry', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'storeEodMinistry']);
 });
