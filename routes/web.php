@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Web\CalendarController;
 use App\Http\Controllers\Web\InventoryController;
+use App\Http\Controllers\Web\SpiritualEodController;
+
 use App\Http\Controllers\Web\LeaveController;
 use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\ProfileController;
@@ -71,11 +73,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/eod/gm', [EodReportController::class, 'gmView'])->name('eod.gm');
     Route::get('/eod/hr', [EodReportController::class, 'hrView'])->name('eod.hr');
 
+    // Employee EOD view & excel export
+    Route::get('/eod/employee', [EodReportController::class, 'employeeEodView'])->name('eod.employee.view');
+    Route::get('/eod/employee/data', [EodReportController::class, 'getEmployeeEodData'])->name('eod.employee.data');
+    Route::get('/eod/employee/export', [EodReportController::class, 'exportEodReports'])->name('eod.employee.export');
+
+    // Backward-compatible alias (some environments mount differently)
+    Route::get('/eod/employee/', [EodReportController::class, 'employeeEodView']);
+
+
+
+
     // Spiritual Formation
+
+    // Web endpoint wrapper for authenticated session requests
+    Route::post('/spiritual/eod-ministry', [SpiritualEodController::class, 'storeEodMinistry'])->name('eod.ministry.store');
+
+
+
+
+
+
     Route::get('/spiritual', function () {
         return Inertia::render('Spiritual/Index');
     })->name('spiritual.index');
 });
+
 
 require __DIR__.'/auth.php';
 

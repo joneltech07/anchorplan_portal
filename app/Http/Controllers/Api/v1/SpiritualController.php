@@ -412,11 +412,14 @@ $wednesdayAttended = WednesdayPrayerRecord::whereIn('wednesday_date', $wednesday
         foreach ($selected as $type) {
             if ($type === 'other') {
                 MinistryInvolvement::create([
+                    'id' => (string) Str::uuid(),
                     'user_id' => $request->user()->id,
                     'eod_date' => $data['report_date'],
                     'ministry_type' => 'other',
                     'custom_description' => $otherDesc,
+
                 ]);
+
                 continue;
             }
 
@@ -425,10 +428,14 @@ $wednesdayAttended = WednesdayPrayerRecord::whereIn('wednesday_date', $wednesday
             }
 
             MinistryInvolvement::create([
-                'user_id' => $request->user()->id,
-                'eod_date' => $data['report_date'],
-                'ministry_type' => $type,
+                'id' => (string) Str::uuid(),
+                    'id' => (string) Str::uuid(),
+                    'user_id' => $request->user()->id,
+                    'eod_date' => $data['report_date'],
+                    'ministry_type' => $type,
             ]);
+
+
         }
 
         return response()->json(['message' => 'Saved']);

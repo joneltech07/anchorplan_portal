@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\EodReportsExport;
 use App\Models\EodReport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Maatwebsite\Excel\facades\Excel;
+
 
 class EodReportController extends Controller
 {
@@ -36,7 +40,6 @@ class EodReportController extends Controller
 
     public function create(Request $request)
     {
-        // show form for today's EOD
         return Inertia::render('EOD/Form', [
             'today' => now()->toDateString(),
         ]);
@@ -117,7 +120,6 @@ class EodReportController extends Controller
 
     public function teamView(Request $request)
     {
-        // managers: fetch team
         return Inertia::render('EOD/TeamView');
     }
 
@@ -130,4 +132,145 @@ class EodReportController extends Controller
     {
         return Inertia::render('EOD/HRView');
     }
+
+    // ===== Employee EOD View & Excel Export =====
+
+    public function employeeEodView(Request $request)
+    {
+        $user = $request->user();
+        abort_unless(
+            $user && $user->hasAnyRole(['super_admin', 'general_manager', 'hr_manager', 'department_manager', 'pastoral_lead', 'executive_assistant']),
+            403
+        );
+
+        return Inertia::render('EOD/EmployeeEodView', [
+            'filters' => $request->only(['date_from', 'date_to', 'department', 'employee_id', 'status']),
+        ]);
+    }
+
+    public function getEmployeeEodData(Request $request)
+    {
+        $user = $request->user();
+        abort_unless(
+            $user && $user->hasAnyRole(['super_admin', 'general_manager', 'hr_manager', 'department_manager', 'pastoral_lead', 'executive_assistant']),
+            403
+        );
+
+        $dateFrom = $request->get('date_from')
+            ? Carbon::parse($request->get('date_from'))->startOfDay()
+            : now()->startOfMonth();
+
+        $dateTo = $request->get('date_to')
+            ? Carbon::parse($request->get('date_to'))->endOfDay()
+            : now();
+
+        $query = EodReport::with(['user', 'ministryInvolvements'])
+            ->whereBetween('report_date', [$dateFrom->toDateString(), $dateTo->toDateString()]);
+
+        if ($request->filled('department')) {
+            $query->whereHas('user', fn ($q) => $q->where('department', $request->department));
+        }
+
+        if ($request->filled('employee_id')) {
+            $query->where('user_id', $request->employee_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($user->hasRole('department_manager')) {
+            $query->whereHas('user', fn ($q) => $q->where('department', $user->department));
+        }
+
+        $perPage = (int) $request->get('per_page', 50);
+        $page = (int) $request->get('page', 1);
+
+        $paginator = $query->orderBy('report_date', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $paginator->getCollection()->transform(function ($report) {
+            return [
+                'id' => $report->id,
+                'employee_name' => $report->user?->name ?? '',
+                'department' => $report->user?->department ?? '',
+                'position' => $report->user?->position ?? '',
+                'date' => optional($report->report_date)->format('Y-m-d'),
+                'accomplishments' => Str::limit((string) ($report->accomplishments ?? ''), 100),
+                'tomorrow_plan' => Str::limit((string) ($report->tomorrow_plan ?? ''), 100),
+                'blockers' => (string) ($report->blockers ?? ''),
+                'ministries' => $report->ministryInvolvements?->pluck('ministry_type')->toArray() ?? [],
+                'status' => (string) ($report->status ?? ''),
+                'submitted_at' => $report->submitted_at?->format('Y-m-d H:i'),
+                'hours_logged' => $report->hours_logged,
+                'mood_rating' => $report->mood_rating,
+            ];
+        });
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'total' => $paginator->total(),
+            'current_page' => $paginator->currentPage(),
+            'per_page' => $paginator->perPage(),
+        ]);
+    }
+
+    public function exportEodReports(Request $request)
+    {
+        $user = $request->user();
+        abort_unless(
+            $user && $user->hasAnyRole(['super_admin', 'general_manager', 'hr_manager', 'department_manager', 'pastoral_lead', 'executive_assistant']),
+            403
+        );
+
+        $dateFrom = $request->get('date_from')
+            ? Carbon::parse($request->get('date_from'))->startOfDay()
+            : now()->startOfMonth();
+
+        $dateTo = $request->get('date_to')
+            ? Carbon::parse($request->get('date_to'))->endOfDay()
+            : now();
+
+        $query = EodReport::with(['user', 'ministryInvolvements'])
+            ->whereBetween('report_date', [$dateFrom->toDateString(), $dateTo->toDateString()]);
+
+        if ($request->filled('department')) {
+            $query->whereHas('user', fn ($q) => $q->where('department', $request->department));
+        }
+
+        if ($request->filled('employee_id')) {
+            $query->where('user_id', $request->employee_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($user->hasRole('department_manager')) {
+            $query->whereHas('user', fn ($q) => $q->where('department', $user->department));
+        }
+
+        $reports = $query->orderBy('report_date', 'desc')->get();
+
+        $rows = $reports->map(function ($report) {
+            return [
+                'id' => $report->id,
+                'employee_name' => $report->user?->name ?? '',
+                'department' => $report->user?->department ?? '',
+                'position' => $report->user?->position ?? '',
+                'date' => optional($report->report_date)->format('Y-m-d'),
+                'accomplishments' => (string) ($report->accomplishments ?? ''),
+                'tomorrow_plan' => (string) ($report->tomorrow_plan ?? ''),
+                'blockers' => (string) ($report->blockers ?? ''),
+                'ministries' => $report->ministryInvolvements?->pluck('ministry_type')->toArray() ?? [],
+                'status' => (string) ($report->status ?? ''),
+                'submitted_at' => $report->submitted_at?->format('Y-m-d H:i'),
+                'hours_logged' => $report->hours_logged,
+                'mood_rating' => $report->mood_rating,
+            ];
+        })->toArray();
+
+        return Excel::download(new EodReportsExport($rows), 'eod-reports-' . now()->format('Y-m-d_His') . '.xlsx');
+    }
 }
+

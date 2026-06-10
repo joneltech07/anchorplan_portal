@@ -48,7 +48,13 @@ class EodReport extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function ministryInvolvements()
+    {
+        return $this->hasMany(MinistryInvolvement::class, 'user_id', 'user_id')->whereColumn('eod_date', 'report_date');
+    }
+
     // Scopes
+
     public function scopeForManager($query, $managerId)
     {
         return $query->whereHas('user', function ($q) use ($managerId) {

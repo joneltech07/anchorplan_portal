@@ -75,4 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/spiritual/ministry/reports', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'ministryReports']);
 
     Route::post('/spiritual/eod-ministry', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'storeEodMinistry']);
+
+    // Backward-compatible alias (some clients may call without the /api prefix)
+    Route::post('/eod-ministry', [\App\Http\Controllers\Api\v1\SpiritualController::class, 'storeEodMinistry']);
 });
+

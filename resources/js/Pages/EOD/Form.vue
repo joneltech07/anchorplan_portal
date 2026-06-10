@@ -1,7 +1,15 @@
 <script setup>
-import axios from 'axios';
-
 import { Head, useForm } from '@inertiajs/vue3';
+
+
+
+// Use Inertia session auth cookies for sanctum
+// axios instance comes from global bootstrap.js
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Accept'] = 'application/json';
+
+
+
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import MinistrySection from '@/pages/EOD/MinistrySection.vue';
 
@@ -26,8 +34,20 @@ const submit = async () => {
 
     // Persist ministry involvement via API (Pastoral Lead module requirement)
     // Note: if your backend EOD store already returns a report id, we can include it; otherwise API uses user_id+date.
+    // Use non-API (web/auth) axios endpoint instead of /api/v1 to avoid unauth issues
+    // (Laravel will use the authenticated session)
     try {
-        await axios.post('/api/spiritual/eod-ministry', {
+        await axios.post(route('eod.ministry.store'), {
+
+
+
+
+
+
+
+
+            // If your server is not mounted under /api, also consider using route('...')
+
             report_date: form.report_date,
             ministry_types: form.ministry_types,
             other_description: form.other_description,

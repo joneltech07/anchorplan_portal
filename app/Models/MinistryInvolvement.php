@@ -13,6 +13,7 @@ class MinistryInvolvement extends Model
     protected $table = 'ministry_involvement';
 
     protected $fillable = [
+        'id',
         'user_id',
         'eod_date',
         'ministry_type',
