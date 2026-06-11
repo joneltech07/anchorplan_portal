@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\DevotionalRecord;
 use App\Models\SundayServiceRecord;
 use App\Models\User;
-use App\Models\WedednesdayPrayerRecord;
+use App\Models\WednesdayPrayerRecord;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -42,12 +42,12 @@ class SpiritualCurrentDateSeeder extends Seeder
 
         // Wednesday prayer for the (upcoming) Wednesday of current week
         foreach ($users as $u) {
-            $record = WedednesdayPrayerRecord::where('user_id', $u->id)
+            $record = WednesdayPrayerRecord::where('user_id', $u->id)
                 ->where('wednesday_date', $currentWed)
                 ->first();
 
             if (! $record) {
-                WedednesdayPrayerRecord::create([
+                WednesdayPrayerRecord::create([
                     'id' => (string) \Illuminate\Support\Str::uuid(),
                     'user_id' => $u->id,
                     'wednesday_date' => $currentWed,

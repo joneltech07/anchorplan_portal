@@ -5,6 +5,10 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 // import { route } from '@/routes';
 
 import axios from 'axios';
+
+// Ziggy route helper (generated globally in the app); used to resolve web named routes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 import {
   Users,
   BookOpen,
@@ -20,7 +24,7 @@ import {
 
 // ziggy route helper may not include new pages; this component uses API only.
 
-declare const route: any;
+
 
 type DeptOption = { name: string; count: number };
 
@@ -58,9 +62,11 @@ const hasDepartment = computed(() => selectedDepartment.value.trim().length > 0)
 const fetchDashboard = async () => {
   loading.value = true;
   try {
-    const res = await axios.get('/api/spiritual/dashboard');
-    todaySummary.value = res.data.summary;
-    topMinistry.value = res.data.top_ministry;
+    // Web routes (Inertia session/auth cookies) instead of API routes
+    const res = await axios.get('/spiritual/dashboard');
+    // API already returns {summary, top_ministry} shape in res.data
+    todaySummary.value = res.data.summary ?? res.data;
+    topMinistry.value = res.data.top_ministry ?? null;
   } finally {
     loading.value = false;
   }
@@ -69,7 +75,7 @@ const fetchDashboard = async () => {
 const fetchDevotionals = async () => {
   loading.value = true;
   try {
-    const res = await axios.get('/api/spiritual/devotional/records', {
+    const res = await axios.get('/spiritual/devotional/records', {
       params: {
         date: devotionalDate.value,
         department: selectedDepartment.value || undefined,
@@ -84,7 +90,7 @@ const fetchDevotionals = async () => {
 const fetchWednesday = async () => {
   loading.value = true;
   try {
-    const res = await axios.get('/api/spiritual/wednesday/records', {
+    const res = await axios.get('/spiritual/wednesday/records', {
       params: { date: prayerDate.value },
     });
     wednesdayRecords.value = res.data;
@@ -96,7 +102,7 @@ const fetchWednesday = async () => {
 const fetchSunday = async () => {
   loading.value = true;
   try {
-    const res = await axios.get('/api/spiritual/sunday/records', {
+    const res = await axios.get('/spiritual/sunday/records', {
       params: { date: sundayDate.value },
     });
     sundayRecords.value = res.data;
@@ -108,11 +114,11 @@ const fetchSunday = async () => {
 const fetchMinistry = async () => {
   loading.value = true;
   try {
-    const stats = await axios.get('/api/spiritual/ministry/stats');
-    ministryStats.value = stats.data;
+    const stats = await axios.get('/spiritual/ministry/stats');
+    ministryStats.value = stats.data ?? stats.data ?? stats;
 
-    const reports = await axios.get('/api/spiritual/ministry/reports');
-    ministryReports.value = reports.data;
+    const reports = await axios.get('/spiritual/ministry/reports');
+    ministryReports.value = reports.data ?? reports.data ?? reports;
   } finally {
     loading.value = false;
   }

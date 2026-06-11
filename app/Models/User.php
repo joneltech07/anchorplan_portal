@@ -252,4 +252,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(self::class, 'supports_executive_id');
     }
+
+    public function employeeShifts()
+    {
+        return $this->hasMany(EmployeeShift::class, 'user_id');
+    }
+
+    public function scheduleExceptions()
+    {
+        return $this->hasMany(ScheduleException::class, 'user_id');
+    }
 }

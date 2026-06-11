@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Backwards compatibility alias (typo) for Wednesday prayer record model.
  * Main code should use WednesdayPrayerRecord.
  */
-class WedednesdayPrayerRecord extends Model
+class WednesdayPrayerRecord extends Model
 {
     use HasFactory;
 

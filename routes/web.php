@@ -30,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance', [App\Http\Controllers\Web\AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance/clock-in', [App\Http\Controllers\Web\AttendanceController::class, 'clockIn'])->name('attendance.clock-in');
     Route::post('/attendance/clock-out', [App\Http\Controllers\Web\AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
+    Route::post('/attendance/{id}/approve-ot', [App\Http\Controllers\Web\AttendanceController::class, 'approveOt'])->name('attendance.approve-ot');
+    Route::post('/attendance/{id}/reject-ot', [App\Http\Controllers\Web\AttendanceController::class, 'rejectOt'])->name('attendance.reject-ot');
 
     Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
     Route::post('/payroll/periods', [PayrollController::class, 'storePeriod'])->name('payroll.periods.store');
@@ -89,14 +91,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Web endpoint wrapper for authenticated session requests
     Route::post('/spiritual/eod-ministry', [SpiritualEodController::class, 'storeEodMinistry'])->name('eod.ministry.store');
 
+    // Spiritual Formation - web routes (return JSON; no /api prefix)
+    Route::get('/spiritual/dashboard', [\App\Http\Controllers\Web\SpiritualController::class, 'dashboard']);
+    Route::get('/spiritual/devotional/records', [\App\Http\Controllers\Web\SpiritualController::class, 'devotionalRecords']);
+    Route::post('/spiritual/devotional/{userId}', [\App\Http\Controllers\Web\SpiritualController::class, 'updateDevotional']);
+    Route::post('/spiritual/devotional/remind/{userId}', [\App\Http\Controllers\Web\SpiritualController::class, 'remindDevotional']);
+    Route::post('/spiritual/devotional/remind-all', [\App\Http\Controllers\Web\SpiritualController::class, 'remindAll']);
 
+    Route::get('/spiritual/wednesday/records', [\App\Http\Controllers\Web\SpiritualController::class, 'wednesdayRecords']);
+    Route::post('/spiritual/wednesday/{userId}', [\App\Http\Controllers\Web\SpiritualController::class, 'updateWednesday']);
 
+    Route::get('/spiritual/sunday/records', [\App\Http\Controllers\Web\SpiritualController::class, 'sundayRecords']);
+    Route::post('/spiritual/sunday/{userId}', [\App\Http\Controllers\Web\SpiritualController::class, 'updateSunday']);
 
-
+    Route::get('/spiritual/ministry/stats', [\App\Http\Controllers\Web\SpiritualController::class, 'ministryStats']);
+    Route::get('/spiritual/ministry/reports', [\App\Http\Controllers\Web\SpiritualController::class, 'ministryReports']);
 
     Route::get('/spiritual', function () {
         return Inertia::render('Spiritual/Index');
     })->name('spiritual.index');
+
+    // Shift Scheduling & Assignment
+    Route::get('/shifts', [\App\Http\Controllers\Web\ShiftController::class, 'index'])->name('shifts.index');
+    Route::get('/shifts/events', [\App\Http\Controllers\Web\ShiftController::class, 'getEvents'])->name('shifts.events');
+    Route::post('/shifts/types', [\App\Http\Controllers\Web\ShiftController::class, 'storeShiftType'])->name('shifts.types.store');
+    Route::put('/shifts/types/{shiftType}', [\App\Http\Controllers\Web\ShiftController::class, 'updateShiftType'])->name('shifts.types.update');
+    Route::delete('/shifts/types/{shiftType}', [\App\Http\Controllers\Web\ShiftController::class, 'destroyShiftType'])->name('shifts.types.destroy');
+    Route::post('/shifts/assign', [\App\Http\Controllers\Web\ShiftController::class, 'assignShift'])->name('shifts.assign');
+    Route::delete('/shifts/assign/{id}', [\App\Http\Controllers\Web\ShiftController::class, 'deleteAssignment'])->name('shifts.assign.destroy');
+    Route::post('/shifts/weekly-schedules', [\App\Http\Controllers\Web\ShiftController::class, 'storeWeeklySchedule'])->name('shifts.weekly-schedules.store');
+    Route::delete('/shifts/weekly-schedules/{weeklySchedule}', [\App\Http\Controllers\Web\ShiftController::class, 'destroyWeeklySchedule'])->name('shifts.weekly-schedules.destroy');
+    Route::post('/shifts/exceptions', [\App\Http\Controllers\Web\ShiftController::class, 'storeException'])->name('shifts.exceptions.store');
+    Route::delete('/shifts/exceptions/{id}', [\App\Http\Controllers\Web\ShiftController::class, 'deleteException'])->name('shifts.exceptions.destroy');
 });
 
 

@@ -13,7 +13,7 @@ use Carbon\Carbon;
 class AttendanceController extends Controller
 {
     /**
-     * Display the attendance dashboard.
+     * Display the attendance dashboard with timesheets.
      */
     public function index(Request $request)
     {
@@ -25,37 +25,99 @@ class AttendanceController extends Controller
             ->where('date', $today)
             ->first();
 
-        // 7 days summary history
-        $sevenDaysAgo = Carbon::today()->subDays(6)->format('Y-m-d');
-        $history = AttendanceRecord::where('user_id', $user->id)
-            ->whereBetween('date', [$sevenDaysAgo, $today])
+        // Resolve date range (default to current month)
+        $startDateStr = $request->input('start_date', Carbon::today()->startOfMonth()->format('Y-m-d'));
+        $endDateStr = $request->input('end_date', Carbon::today()->endOfMonth()->format('Y-m-d'));
+
+        // Fetch user's timesheets in range
+        $myRecords = AttendanceRecord::with('user')
+            ->where('user_id', $user->id)
+            ->whereBetween('date', [$startDateStr, $endDateStr])
             ->orderBy('date', 'desc')
             ->get();
 
-        $teamAttendance = [];
-        $teamEmployees = [];
+        $timesheets = $this->transformRecords($myRecords);
 
-        // If manager/admin/hr, fetch team data
-        if ($user->hasRole(['admin', 'manager', 'hr'])) {
-            $teamEmployees = User::where('is_active', true)
-                ->select('id', 'name', 'email', 'role', 'department')
+        $teamTimesheets = [];
+        $pendingOtApprovals = [];
+        $isAdminOrManagerOrHr = $user->hasRole(['admin', 'manager', 'hr']);
+
+        if ($isAdminOrManagerOrHr) {
+            // Fetch all active employees' timesheets in range
+            $teamRecords = AttendanceRecord::with('user')
+                ->whereBetween('date', [$startDateStr, $endDateStr])
+                ->orderBy('date', 'desc')
                 ->get();
 
-            // Fetch team attendance for the current month
-            $startOfMonth = Carbon::today()->startOfMonth()->format('Y-m-d');
-            $endOfMonth = Carbon::today()->endOfMonth()->format('Y-m-d');
-            
-            $teamAttendance = AttendanceRecord::with('user:id,name,email')
-                ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            $teamTimesheets = $this->transformRecords($teamRecords);
+
+            // Fetch pending OT requests (excess hours worked, ot_status = 'pending')
+            // To make sure we only grab completed days, clock_out_time must not be null
+            $pendingRecords = AttendanceRecord::with('user')
+                ->whereNotNull('clock_out_time')
+                ->where('ot_status', 'pending')
+                ->orderBy('date', 'desc')
                 ->get();
+
+            // Filter team records where actual hours > shift hours
+            $pendingOtApprovals = $this->transformRecords($pendingRecords)->filter(function ($t) {
+                return $t['status'] === 'Request for approval';
+            })->values()->all();
         }
 
         return Inertia::render('Attendance/Index', [
             'todayRecord' => $todayRecord,
-            'history' => $history,
-            'teamEmployees' => $teamEmployees,
-            'teamAttendance' => $teamAttendance,
+            'timesheets' => $timesheets,
+            'teamTimesheets' => $teamTimesheets,
+            'pendingOtApprovals' => $pendingOtApprovals,
+            'isAdminOrHr' => $isAdminOrManagerOrHr,
+            'filters' => [
+                'start_date' => $startDateStr,
+                'end_date' => $endDateStr,
+            ]
         ]);
+    }
+
+    private function transformRecords($records)
+    {
+        return $records->map(function ($record) {
+            $shiftType = $record->getShiftType();
+            $shiftHours = $record->getShiftHours();
+            $actualHours = $record->getActualHours();
+            $rate = $record->getHourlyRate();
+            $payment = $record->getEstimatedPayment();
+            $status = $record->getTimesheetStatus();
+
+            $dateFormatted = Carbon::parse($record->date)->format('Y-m-d l');
+
+            $actualDuration = $record->clock_out_time 
+                ? $record->formatDurationSeconds(Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time)))
+                : $record->formatDurationSeconds(Carbon::now()->diffInSeconds(Carbon::parse($record->clock_in_time)));
+
+            return [
+                'id' => $record->id,
+                'user_id' => $record->user_id,
+                'user_name' => $record->user->name ?? '—',
+                'user_department' => $record->user->department ?? '—',
+                'user_position' => $record->user->position ?? '—',
+                'date' => $dateFormatted,
+                'raw_date' => $record->date ? $record->date->format('Y-m-d') : null,
+                'shift_name' => $shiftType ? $shiftType->name : 'Standard Shift',
+                'shift_hours' => ((float)$shiftHours == (int)$shiftHours ? (int)$shiftHours : number_format($shiftHours, 1)) . ' hrs',
+                'raw_shift_hours' => $shiftHours,
+                'actual_seconds' => $record->clock_out_time 
+                    ? Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time))
+                    : Carbon::now()->diffInSeconds(Carbon::parse($record->clock_in_time)),
+                'actual_duration' => $actualDuration,
+                'rate' => 'PHP ' . number_format($rate, 2),
+                'raw_rate' => $rate,
+                'estimated_payment' => 'PHP ' . number_format($payment, 2),
+                'status' => $status,
+                'ot_status' => $record->ot_status,
+                'clock_in_time' => $record->clock_in_time ? $record->clock_in_time->toIso8601String() : null,
+                'clock_out_time' => $record->clock_out_time ? $record->clock_out_time->toIso8601String() : null,
+            ];
+        });
     }
 
     /**
@@ -130,5 +192,43 @@ class AttendanceController extends Controller
         ]);
 
         return back()->with('success', 'Clocked out successfully!');
+    }
+
+    /**
+     * Approve Overtime request.
+     */
+    public function approveOt(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole(['admin', 'manager', 'hr'])) {
+            abort(403, 'Unauthorized');
+        }
+
+        $record = AttendanceRecord::findOrFail($id);
+        $record->update([
+            'ot_status' => 'approved',
+            'ot_approved_by' => $user->id,
+        ]);
+
+        return back()->with('success', 'Overtime approved successfully.');
+    }
+
+    /**
+     * Reject Overtime request.
+     */
+    public function rejectOt(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole(['admin', 'manager', 'hr'])) {
+            abort(403, 'Unauthorized');
+        }
+
+        $record = AttendanceRecord::findOrFail($id);
+        $record->update([
+            'ot_status' => 'rejected',
+            'ot_approved_by' => $user->id,
+        ]);
+
+        return back()->with('success', 'Overtime request rejected.');
     }
 }

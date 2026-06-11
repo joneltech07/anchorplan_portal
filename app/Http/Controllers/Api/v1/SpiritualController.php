@@ -69,7 +69,7 @@ class SpiritualController extends Controller
             return;
         }
 
-        $existingUserIds = WedednesdayPrayerRecord::where('wednesday_date', $date)
+        $existingUserIds = WednesdayPrayerRecord::where('wednesday_date', $date)
             ->whereIn('user_id', $users->pluck('id'))
             ->pluck('user_id')
             ->all();
@@ -78,7 +78,7 @@ class SpiritualController extends Controller
 
         $now = now();
         foreach ($missing as $u) {
-            WedednesdayPrayerRecord::create([
+            WednesdayPrayerRecord::create([
                 'user_id' => $u->id,
                 'wednesday_date' => $date,
                 'attended' => false,
@@ -280,7 +280,7 @@ $wednesdayAttended = WednesdayPrayerRecord::whereIn('wednesday_date', $wednesday
         ]);
         $date = $validated['date'] ?? now()->toDateString();
 
-        $records = WedednesdayPrayerRecord::with('user')
+        $records = WednesdayPrayerRecord::with('user')
             ->where('wednesday_date', $date)
             ->get();
 
@@ -296,7 +296,7 @@ $wednesdayAttended = WednesdayPrayerRecord::whereIn('wednesday_date', $wednesday
             'absence_reason' => 'nullable|string',
         ]);
 
-        $record = WedednesdayPrayerRecord::firstOrCreate([
+        $record = WednesdayPrayerRecord::firstOrCreate([
             'user_id' => $userId,
             'wednesday_date' => $data['wednesday_date'],
         ]);

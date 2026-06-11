@@ -8,7 +8,8 @@ import {
     ListTodo,
     Calendar,
     Package,
-    UserMinus
+    UserMinus,
+    CalendarCheck
 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -38,6 +39,11 @@ const mainNavItems: NavItem[] = [
         title: 'Attendance',
         href: route('attendance.index'),
         icon: Clock,
+    },
+    {
+        title: 'Shifts & Scheduling',
+        href: route('shifts.index'),
+        icon: CalendarCheck,
     },
     {
         title: 'Payroll',

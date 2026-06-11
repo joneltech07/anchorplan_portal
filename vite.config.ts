@@ -33,4 +33,12 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '0.0.0.0', // Listens on all network interfaces, including Tailscale
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: '100.118.78.70', // <-- REPLACE with your exact Tailscale IP
+        },
+    },
 });

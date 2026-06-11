@@ -46,10 +46,15 @@ class PayrollCalculationService
                         $secondsWorked = $outTime->diffInSeconds($inTime);
                         $hoursWorked = round($secondsWorked / 3600, 2);
 
-                        // 8 hours standard work day limit
-                        if ($hoursWorked > 8.0) {
-                            $regularHours += 8.0;
-                            $overtimeHours += ($hoursWorked - 8.0);
+                        // Resolve shift duration dynamically (falls back to 8.0)
+                        $shiftHours = $record->getShiftHours();
+
+                        if ($hoursWorked > $shiftHours) {
+                            $regularHours += $shiftHours;
+                            // Overtime hours only paid if OT is approved
+                            if ($record->ot_status === 'approved') {
+                                $overtimeHours += ($hoursWorked - $shiftHours);
+                            }
                         } else {
                             $regularHours += $hoursWorked;
                         }
