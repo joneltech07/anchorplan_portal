@@ -27,7 +27,7 @@ class ShiftType extends Model
     {
         return [
             'break_hours' => 'decimal:1',
-            'hourly_rate' => 'decimal:2',
+            'hourly_rate' => 'decimal:4',
             'night_differential_rate' => 'decimal:2',
             'is_active' => 'boolean',
         ];

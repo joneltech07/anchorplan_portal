@@ -850,7 +850,7 @@ onMounted(() => {
                             </div>
                             <div class="space-y-1.5">
                                 <label class="text-sm font-medium text-foreground">Hourly Rate (PHP)</label>
-                                <input v-model="shiftTypeForm.hourly_rate" type="number" step="0.01" required class="w-full rounded-2xl border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-800 dark:bg-zinc-950" />
+                                <input v-model="shiftTypeForm.hourly_rate" type="number" step="any" required class="w-full rounded-2xl border border-border bg-muted/30 px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-800 dark:bg-zinc-950" />
                             </div>
                             <div class="space-y-1.5">
                                 <label class="text-sm font-medium text-foreground">Night Diff. (e.g. 1.1)</label>

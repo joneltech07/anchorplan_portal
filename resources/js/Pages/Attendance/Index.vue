@@ -1,7 +1,15 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, reactive, onMounted, onUnmounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import Modal from '@/components/Modal.vue';
+import TextInput from '@/components/TextInput.vue';
+import InputLabel from '@/components/InputLabel.vue';
+import InputError from '@/components/InputError.vue';
+import SecondaryButton from '@/components/SecondaryButton.vue';
+import DangerButton from '@/components/DangerButton.vue';
+import PrimaryButton from '@/components/PrimaryButton.vue';
+import { Pencil, Trash2 } from '@lucide/vue';
 
 const props = defineProps({
     todayRecord: Object,
@@ -9,6 +17,7 @@ const props = defineProps({
     teamTimesheets: Array,
     pendingOtApprovals: Array,
     isAdminOrHr: Boolean,
+    isSuperAdmin: Boolean,
     filters: Object,
 });
 
@@ -152,6 +161,85 @@ const filteredTimesheets = computed(() => {
     }
     return props.timesheets || [];
 });
+
+// Admin edit/delete timesheet functions
+const formatForDatetimeLocal = (isoString) => {
+    if (!isoString) return '';
+    try {
+        const date = new Date(isoString);
+        const pad = (num) => String(num).padStart(2, '0');
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (e) {
+        return '';
+    }
+};
+
+const showingEditModal = ref(false);
+const editingRecord = ref(null);
+const editForm = useForm({
+    clock_in_time: '',
+    clock_out_time: '',
+    password: '',
+});
+
+const openEditModal = (record) => {
+    editingRecord.value = record;
+    editForm.clock_in_time = formatForDatetimeLocal(record.clock_in_time);
+    editForm.clock_out_time = formatForDatetimeLocal(record.clock_out_time);
+    editForm.password = '';
+    editForm.clearErrors();
+    showingEditModal.value = true;
+};
+
+const closeEditModal = () => {
+    showingEditModal.value = false;
+    editForm.reset();
+    editForm.clearErrors();
+};
+
+const submitEdit = () => {
+    editForm
+        .transform((data) => ({
+            ...data,
+            clock_in_time: data.clock_in_time ? new Date(data.clock_in_time).toISOString() : '',
+            clock_out_time: data.clock_out_time ? new Date(data.clock_out_time).toISOString() : null,
+        }))
+        .put(route('attendance.edit-admin', editingRecord.value.id), {
+            preserveScroll: true,
+            onSuccess: () => closeEditModal(),
+        });
+};
+
+const showingDeleteModal = ref(false);
+const deletingRecord = ref(null);
+const deleteForm = useForm({
+    password: '',
+});
+
+const openDeleteModal = (record) => {
+    deletingRecord.value = record;
+    deleteForm.password = '';
+    deleteForm.clearErrors();
+    showingDeleteModal.value = true;
+};
+
+const closeDeleteModal = () => {
+    showingDeleteModal.value = false;
+    deleteForm.reset();
+    deleteForm.clearErrors();
+};
+
+const submitDelete = () => {
+    deleteForm.delete(route('attendance.delete-admin', deletingRecord.value.id), {
+        preserveScroll: true,
+        onSuccess: () => closeDeleteModal(),
+    });
+};
 </script>
 
 <template>
@@ -371,27 +459,48 @@ const filteredTimesheets = computed(() => {
                                         </span>
                                     </td>
 
-                                    <!-- Actions column (Approve/Reject OT) -->
+                                    <!-- Actions column (Approve/Reject OT + Edit/Delete for Super Admin) -->
                                     <td v-if="props.isAdminOrHr" class="px-6 py-4 text-center whitespace-nowrap">
-                                        <div v-if="record.status === 'Request for approval'" class="flex items-center justify-center gap-2">
-                                            <button 
-                                                @click="approveOt(record.id)"
-                                                class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 text-xs font-semibold shadow-sm transition"
-                                                title="Approve OT"
-                                            >
-                                                Approve
-                                            </button>
-                                            <button 
-                                                @click="rejectOt(record.id)"
-                                                class="rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground px-2.5 py-1.5 text-xs font-semibold shadow-sm transition"
-                                                title="Reject OT"
-                                            >
-                                                Reject
-                                            </button>
+                                        <div class="flex items-center justify-center gap-2">
+                                            <!-- OT Approval Actions -->
+                                            <template v-if="record.status === 'Request for approval'">
+                                                <button 
+                                                    @click="approveOt(record.id)"
+                                                    class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 text-xs font-semibold shadow-sm transition"
+                                                    title="Approve OT"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button 
+                                                    @click="rejectOt(record.id)"
+                                                    class="rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground px-2.5 py-1.5 text-xs font-semibold shadow-sm transition"
+                                                    title="Reject OT"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </template>
+                                            <span v-else-if="!props.isSuperAdmin" class="text-xs text-muted-foreground">
+                                                {{ record.ot_status === 'approved' ? 'OT Approved' : (record.ot_status === 'rejected' ? 'OT Rejected' : '—') }}
+                                            </span>
+
+                                            <!-- Super Admin Actions -->
+                                            <template v-if="props.isSuperAdmin">
+                                                <button 
+                                                    @click="openEditModal(record)"
+                                                    class="rounded-lg bg-blue-600 hover:bg-blue-500 text-white p-2 text-xs font-semibold shadow-sm transition flex items-center justify-center"
+                                                    title="Edit Timesheet"
+                                                >
+                                                    <Pencil class="h-4 w-4" />
+                                                </button>
+                                                <button 
+                                                    @click="openDeleteModal(record)"
+                                                    class="rounded-lg bg-red-600 hover:bg-red-500 text-white p-2 text-xs font-semibold shadow-sm transition flex items-center justify-center"
+                                                    title="Delete Timesheet"
+                                                >
+                                                    <Trash2 class="h-4 w-4" />
+                                                </button>
+                                            </template>
                                         </div>
-                                        <span v-else class="text-xs text-muted-foreground">
-                                            {{ record.ot_status === 'approved' ? 'OT Approved' : (record.ot_status === 'rejected' ? 'OT Rejected' : '—') }}
-                                        </span>
                                     </td>
                                 </tr>
                                 
@@ -416,5 +525,107 @@ const filteredTimesheets = computed(() => {
                 </section>
             </div>
         </div>
+        <!-- Edit Timesheet Modal -->
+        <Modal :show="showingEditModal" @close="closeEditModal">
+            <form @submit.prevent="submitEdit" class="p-6">
+                <h2 class="text-lg font-medium text-foreground">
+                    Edit Timesheet Record
+                </h2>
+
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Update the clock-in and clock-out times for <strong>{{ editingRecord?.user_name }}</strong> on <strong>{{ editingRecord?.date }}</strong>.
+                </p>
+
+                <div class="mt-6 space-y-4">
+                    <div>
+                        <InputLabel for="edit_clock_in" value="Clock In Time" />
+                        <TextInput
+                            id="edit_clock_in"
+                            v-model="editForm.clock_in_time"
+                            type="datetime-local"
+                            class="mt-1 block w-full bg-background border-border text-foreground"
+                            required
+                        />
+                        <InputError :message="editForm.errors.clock_in_time" class="mt-2" />
+                    </div>
+
+                    <div>
+                        <InputLabel for="edit_clock_out" value="Clock Out Time" />
+                        <TextInput
+                            id="edit_clock_out"
+                            v-model="editForm.clock_out_time"
+                            type="datetime-local"
+                            class="mt-1 block w-full bg-background border-border text-foreground"
+                        />
+                        <InputError :message="editForm.errors.clock_out_time" class="mt-2" />
+                    </div>
+
+                    <div class="border-t border-border pt-4">
+                        <InputLabel for="edit_password" value="Enter Password to Confirm" />
+                        <TextInput
+                            id="edit_password"
+                            v-model="editForm.password"
+                            type="password"
+                            placeholder="Password"
+                            class="mt-1 block w-full bg-background border-border text-foreground"
+                            required
+                        />
+                        <InputError :message="editForm.errors.password" class="mt-2" />
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="closeEditModal" type="button">
+                        Cancel
+                    </SecondaryButton>
+
+                    <PrimaryButton
+                        :class="{ 'opacity-25': editForm.processing }"
+                        :disabled="editForm.processing"
+                    >
+                        Save Changes
+                    </PrimaryButton>
+                </div>
+            </form>
+        </Modal>
+
+        <!-- Delete Timesheet Modal -->
+        <Modal :show="showingDeleteModal" @close="closeDeleteModal">
+            <form @submit.prevent="submitDelete" class="p-6">
+                <h2 class="text-lg font-medium text-foreground">
+                    Delete Timesheet Record
+                </h2>
+
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Are you sure you want to delete the timesheet record for <strong>{{ deletingRecord?.user_name }}</strong> on <strong>{{ deletingRecord?.date }}</strong>? This action cannot be undone.
+                </p>
+
+                <div class="mt-6">
+                    <InputLabel for="delete_password" value="Enter Password to Confirm" />
+                    <TextInput
+                        id="delete_password"
+                        v-model="deleteForm.password"
+                        type="password"
+                        placeholder="Password"
+                        class="mt-1 block w-full bg-background border-border text-foreground"
+                        required
+                    />
+                    <InputError :message="deleteForm.errors.password" class="mt-2" />
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="closeDeleteModal" type="button">
+                        Cancel
+                    </SecondaryButton>
+
+                    <DangerButton
+                        :class="{ 'opacity-25': deleteForm.processing }"
+                        :disabled="deleteForm.processing"
+                    >
+                        Delete Record
+                    </DangerButton>
+                </div>
+            </form>
+        </Modal>
     </AuthenticatedLayout>
 </template>

@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/attendance/clock-out', [App\Http\Controllers\Web\AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
     Route::post('/attendance/{id}/approve-ot', [App\Http\Controllers\Web\AttendanceController::class, 'approveOt'])->name('attendance.approve-ot');
     Route::post('/attendance/{id}/reject-ot', [App\Http\Controllers\Web\AttendanceController::class, 'rejectOt'])->name('attendance.reject-ot');
+    Route::put('/attendance/{id}/edit-admin', [App\Http\Controllers\Web\AttendanceController::class, 'editAdmin'])->name('attendance.edit-admin');
+    Route::delete('/attendance/{id}/delete-admin', [App\Http\Controllers\Web\AttendanceController::class, 'deleteAdmin'])->name('attendance.delete-admin');
 
     Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
     Route::post('/payroll/periods', [PayrollController::class, 'storePeriod'])->name('payroll.periods.store');

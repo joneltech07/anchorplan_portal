@@ -71,6 +71,7 @@ class AttendanceController extends Controller
             'teamTimesheets' => $teamTimesheets,
             'pendingOtApprovals' => $pendingOtApprovals,
             'isAdminOrHr' => $isAdminOrManagerOrHr,
+            'isSuperAdmin' => $user->hasRole('super_admin'),
             'filters' => [
                 'start_date' => $startDateStr,
                 'end_date' => $endDateStr,
@@ -91,8 +92,8 @@ class AttendanceController extends Controller
             $dateFormatted = Carbon::parse($record->date)->format('Y-m-d l');
 
             $actualDuration = $record->clock_out_time 
-                ? $record->formatDurationSeconds(Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time)))
-                : $record->formatDurationSeconds(Carbon::now()->diffInSeconds(Carbon::parse($record->clock_in_time)));
+                ? $record->formatDurationSeconds(abs(Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time))))
+                : $record->formatDurationSeconds(abs(Carbon::now()->diffInSeconds(Carbon::parse($record->clock_in_time))));
 
             return [
                 'id' => $record->id,
@@ -106,8 +107,8 @@ class AttendanceController extends Controller
                 'shift_hours' => ((float)$shiftHours == (int)$shiftHours ? (int)$shiftHours : number_format($shiftHours, 1)) . ' hrs',
                 'raw_shift_hours' => $shiftHours,
                 'actual_seconds' => $record->clock_out_time 
-                    ? Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time))
-                    : Carbon::now()->diffInSeconds(Carbon::parse($record->clock_in_time)),
+                    ? abs(Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time)))
+                    : abs(Carbon::now()->diffInSeconds(Carbon::parse($record->clock_in_time))),
                 'actual_duration' => $actualDuration,
                 'rate' => 'PHP ' . number_format($rate, 2),
                 'raw_rate' => $rate,
@@ -142,13 +143,23 @@ class AttendanceController extends Controller
         ]);
 
         $now = Carbon::now();
-        $shiftStart = Carbon::today()->setTime(9, 0, 0);
+
+        // Resolve today's shift type dynamically to compute the correct shift start time
+        $tempRecord = new AttendanceRecord([
+            'user_id' => $user->id,
+            'date' => $today,
+        ]);
+        $shiftType = $tempRecord->getShiftType();
+
+        $shiftStart = $shiftType 
+            ? Carbon::today()->setTimeFromTimeString($shiftType->start_time)
+            : Carbon::today()->setTime(9, 0, 0);
 
         $lateMinutes = 0;
         $status = 'present';
 
         if ($now->greaterThan($shiftStart)) {
-            $lateMinutes = $now->diffInMinutes($shiftStart);
+            $lateMinutes = abs($now->diffInMinutes($shiftStart));
             $status = 'late';
         }
 
@@ -230,5 +241,93 @@ class AttendanceController extends Controller
         ]);
 
         return back()->with('success', 'Overtime request rejected.');
+    }
+
+    /**
+     * Edit attendance record (Super Admin only).
+     */
+    public function editAdmin(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('super_admin')) {
+            abort(403, 'Unauthorized. Super Admin only.');
+        }
+
+        $request->validate([
+            'clock_in_time' => 'required|date',
+            'clock_out_time' => 'nullable|date|after:clock_in_time',
+            'password' => 'required|string',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
+
+        $record = AttendanceRecord::findOrFail($id);
+
+        $clockIn = Carbon::parse($request->clock_in_time);
+        $clockOut = $request->clock_out_time ? Carbon::parse($request->clock_out_time) : null;
+
+        // Recalculate status and late minutes
+        $shiftType = $record->getShiftType();
+        $recordDateStr = $record->date ? $record->date->format('Y-m-d') : Carbon::parse($clockIn)->format('Y-m-d');
+        
+        $shiftStart = $shiftType 
+            ? Carbon::parse($recordDateStr)->setTimeFromTimeString($shiftType->start_time)
+            : Carbon::parse($recordDateStr)->setTime(9, 0, 0);
+
+        $lateMinutes = 0;
+        $status = 'present';
+
+        if ($clockIn->greaterThan($shiftStart)) {
+            $lateMinutes = abs($clockIn->diffInMinutes($shiftStart));
+            $status = 'late';
+        }
+
+        $record->clock_in_time = $clockIn;
+        $record->clock_out_time = $clockOut;
+        $record->status = $status;
+        $record->late_minutes = $lateMinutes;
+
+        // Reset OT status if it doesn't exceed shift hours anymore
+        if ($clockOut) {
+            $actualHours = $record->getActualHours();
+            $shiftHours = $record->getShiftHours();
+            if ($actualHours <= $shiftHours) {
+                $record->ot_status = 'pending';
+                $record->ot_approved_by = null;
+            }
+        } else {
+            $record->ot_status = 'pending';
+            $record->ot_approved_by = null;
+        }
+
+        $record->save();
+
+        return back()->with('success', 'Timesheet updated successfully.');
+    }
+
+    /**
+     * Delete attendance record (Super Admin only).
+     */
+    public function deleteAdmin(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('super_admin')) {
+            abort(403, 'Unauthorized. Super Admin only.');
+        }
+
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
+
+        $record = AttendanceRecord::findOrFail($id);
+        $record->delete();
+
+        return back()->with('success', 'Timesheet deleted successfully.');
     }
 }

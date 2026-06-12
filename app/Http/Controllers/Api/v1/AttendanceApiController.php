@@ -69,13 +69,23 @@ class AttendanceApiController extends Controller
         ]);
 
         $now = Carbon::now();
-        $shiftStart = Carbon::today()->setTime(9, 0, 0); // Standard shift start at 09:00
+
+        // Resolve today's shift dynamically to compute correct shift start time
+        $tempRecord = new AttendanceRecord([
+            'user_id' => $user->id,
+            'date' => $today,
+        ]);
+        $shiftType = $tempRecord->getShiftType();
+
+        $shiftStart = $shiftType 
+            ? Carbon::today()->setTimeFromTimeString($shiftType->start_time)
+            : Carbon::today()->setTime(9, 0, 0);
 
         $lateMinutes = 0;
         $status = 'present';
 
         if ($now->greaterThan($shiftStart)) {
-            $lateMinutes = $now->diffInMinutes($shiftStart);
+            $lateMinutes = abs($now->diffInMinutes($shiftStart));
             $status = 'late';
         }
 

@@ -43,7 +43,7 @@ class PayrollCalculationService
                         $inTime = Carbon::parse($record->clock_in_time);
                         $outTime = Carbon::parse($record->clock_out_time);
                         
-                        $secondsWorked = $outTime->diffInSeconds($inTime);
+                        $secondsWorked = abs($outTime->diffInSeconds($inTime));
                         $hoursWorked = round($secondsWorked / 3600, 2);
 
                         // Resolve shift duration dynamically (falls back to 8.0)

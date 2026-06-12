@@ -89,8 +89,92 @@ class AttendanceRecord extends Model
             $end->addDay();
         }
 
-        $hours = $end->diffInSeconds($start) / 3600.0;
+        $hours = abs($end->diffInSeconds($start)) / 3600.0;
         return max(0, $hours - (float)$shiftType->break_hours);
+    }
+
+    public function getBreakHours()
+    {
+        // 1. Check schedule exception for this date
+        $exception = ScheduleException::where('user_id', $this->user_id)
+            ->where('exception_date', $this->date ? $this->date->format('Y-m-d') : null)
+            ->first();
+
+        if ($exception) {
+            if (in_array($exception->type, ['day_off', 'holiday'])) {
+                return 0.0;
+            }
+            if ($exception->break_hours !== null) {
+                return (float) $exception->break_hours;
+            }
+            $shiftType = $exception->shiftType;
+            if ($shiftType) {
+                return (float) $shiftType->break_hours;
+            }
+        }
+
+        // 2. Check regular shift assignment
+        $shiftType = $this->getShiftType();
+        if ($shiftType) {
+            return (float) $shiftType->break_hours;
+        }
+
+        return 1.0; // fallback standard break hours is 1.0
+    }
+
+    public function calculateNightHoursInRange($in, $out)
+    {
+        $timezone = 'Asia/Manila';
+        $inLocal = $in->copy()->setTimezone($timezone);
+        $outLocal = $out->copy()->setTimezone($timezone);
+
+        if ($outLocal->lessThan($inLocal)) {
+            return 0.0;
+        }
+
+        $startDate = $inLocal->copy()->startOfDay();
+        $endDate = $outLocal->copy()->startOfDay();
+
+        $totalNightSeconds = 0;
+
+        for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
+            // Window 1: 10:00 PM (22:00) to 6:00 AM (06:00) next day local time
+            $windowStart = $date->copy()->setTime(22, 0, 0);
+            $windowEnd = $date->copy()->addDay()->setTime(6, 0, 0);
+
+            $overlapStart = $inLocal->greaterThan($windowStart) ? $inLocal : $windowStart;
+            $overlapEnd = $outLocal->lessThan($windowEnd) ? $outLocal : $windowEnd;
+
+            if ($overlapStart->lessThan($overlapEnd)) {
+                $totalNightSeconds += abs($overlapEnd->diffInSeconds($overlapStart));
+            }
+        }
+
+        // Also check the day before in case the shift started before 6 AM local time
+        $prevDate = $startDate->copy()->subDay();
+        $windowStart = $prevDate->copy()->setTime(22, 0, 0);
+        $windowEnd = $prevDate->copy()->addDay()->setTime(6, 0, 0);
+
+        $overlapStart = $inLocal->greaterThan($windowStart) ? $inLocal : $windowStart;
+        $overlapEnd = $outLocal->lessThan($windowEnd) ? $outLocal : $windowEnd;
+
+        if ($overlapStart->lessThan($overlapEnd)) {
+            $totalNightSeconds += abs($overlapEnd->diffInSeconds($overlapStart));
+        }
+
+        return round($totalNightSeconds / 3600.0, 4);
+    }
+
+    public function getNightDifferentialHours()
+    {
+        if (!$this->clock_in_time) {
+            return 0.0;
+        }
+
+        $in = \Carbon\Carbon::parse($this->clock_in_time);
+        $out = $this->clock_out_time ? \Carbon\Carbon::parse($this->clock_out_time) : \Carbon\Carbon::now();
+
+        return $this->calculateNightHoursInRange($in, $out);
     }
 
     public function getActualHours()
@@ -100,7 +184,9 @@ class AttendanceRecord extends Model
         }
         $in = \Carbon\Carbon::parse($this->clock_in_time);
         $out = $this->clock_out_time ? \Carbon\Carbon::parse($this->clock_out_time) : \Carbon\Carbon::now();
-        return round($out->diffInSeconds($in) / 3600.0, 4);
+        $totalHours = abs($out->diffInSeconds($in)) / 3600.0;
+        $breakHours = $this->getBreakHours();
+        return round(max(0.0, $totalHours - $breakHours), 4);
     }
 
     public function getHourlyRate()
@@ -121,25 +207,56 @@ class AttendanceRecord extends Model
 
     public function getEstimatedPayment()
     {
+        if (!$this->clock_out_time) {
+            return 0.0;
+        }
+
         $rate = $this->getHourlyRate();
         $shiftHours = $this->getShiftHours();
-        
-        if (!$this->clock_out_time) {
-            return 0.0; // Ongoing shifts estimated payment is 0.00
-        }
 
-        $actualHours = $this->getActualHours();
+        $in = \Carbon\Carbon::parse($this->clock_in_time);
+        $out = \Carbon\Carbon::parse($this->clock_out_time);
+        $totalHours = abs($out->diffInSeconds($in)) / 3600.0;
+        $breakHours = $this->getBreakHours();
 
-        if ($actualHours <= $shiftHours) {
-            return round($actualHours * $rate, 2);
-        }
+        $shiftType = $this->getShiftType();
+        $multiplier = ($shiftType && $shiftType->night_differential_rate > 0)
+            ? (float) $shiftType->night_differential_rate
+            : 1.10;
+        $nightRate = $rate * $multiplier;
 
-        // Exceeded shift hours
-        if ($this->ot_status === 'approved') {
-            return round(($shiftHours * $rate) + (($actualHours - $shiftHours) * $rate * 1.5), 2);
+        $actualHours = max(0.0, $totalHours - $breakHours);
+        $isOvertime = $actualHours > $shiftHours;
+
+        if ($isOvertime) {
+            $regularElapsedHours = $shiftHours + $breakHours;
+            $regularEnd = $in->copy()->addSeconds((int)round($regularElapsedHours * 3600));
+            if ($out->lessThan($regularEnd)) {
+                $regularEnd = $out;
+            }
         } else {
-            return round($shiftHours * $rate, 2);
+            $regularEnd = $out;
         }
+
+        $regularNightHours = $this->calculateNightHoursInRange($in, $regularEnd);
+        $regularElapsed = abs($regularEnd->diffInSeconds($in)) / 3600.0;
+        $regularStandardHours = max(0.0, $regularElapsed - $regularNightHours);
+
+        $paidNightHours = max(0.0, $regularNightHours - $breakHours);
+        $remainingBreak = max(0.0, $breakHours - $regularNightHours);
+        $paidStandardHours = max(0.0, $regularStandardHours - $remainingBreak);
+
+        $basePayment = ($paidStandardHours * $rate) + ($paidNightHours * $nightRate);
+
+        $otPayment = 0.0;
+        if ($isOvertime) {
+            $otHours = $actualHours - $shiftHours;
+            $otPayment = $this->ot_status === 'approved' ? ($otHours * $rate * 1.5) : 0.0;
+        }
+
+        $payment = $basePayment + $otPayment;
+
+        return round(max(0.0, $payment), 2);
     }
 
     public function getTimesheetStatus()

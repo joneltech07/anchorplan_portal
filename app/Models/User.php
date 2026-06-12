@@ -85,7 +85,7 @@ class User extends Authenticatable
             'date_employed' => 'date',
             'password' => 'hashed',
             'is_active' => 'boolean',
-            'hourly_rate' => 'decimal:2',
+            'hourly_rate' => 'decimal:4',
             'monthly_salary' => 'decimal:2',
             'contract_start_date' => 'date',
             'contract_end_date' => 'date',
