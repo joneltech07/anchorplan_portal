@@ -34,16 +34,9 @@ const submitTask = () => {
     <Head title="Task Board" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col gap-1">
-                <p class="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Tasks</p>
-                <h2 class="text-2xl font-semibold leading-tight text-foreground">Organize work like Laravel 13</h2>
-            </div>
-        </template>
-
         <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
+            <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm w-full">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Create task</p>
@@ -75,12 +68,13 @@ const submitTask = () => {
                     </div>
                 </section>
 
-                <section class="grid gap-4 xl:grid-cols-4">
-                    <div v-for="column in columns" :key="column.key" class="rounded-[28px] border border-border bg-card p-4 shadow-sm">
+                <section class="grid gap-4 xl:grid-cols-4 w-full">
+                    <div v-for="column in columns" :key="column.key" class="rounded-[28px] border border-border bg-card p-4 shadow-sm w-full">
                         <div class="mb-4 flex items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-foreground">{{ column.label }}</h3>
                             <span :class="column.color + ' rounded-full px-2 py-1 text-xs font-semibold'">{{ grouped[column.key].length }}</span>
                         </div>
+
                         <draggable v-model="grouped[column.key]" item-key="id">
                             <template #item="{ element }">
                                 <div class="mb-4 rounded-3xl border border-border bg-muted p-4">

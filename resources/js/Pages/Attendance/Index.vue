@@ -74,6 +74,7 @@ const todayStatus = computed(() => {
 const startDate = ref(props.filters?.start_date || '');
 const endDate = ref(props.filters?.end_date || '');
 const activeTab = ref('my'); // 'my', 'team', 'pending'
+const teamSearchQuery = ref('');
 
 const applyFilters = () => {
     router.get(route('attendance.index'), {
@@ -154,11 +155,25 @@ onUnmounted(() => {
 
 // Computed list based on active tab
 const filteredTimesheets = computed(() => {
+    const normalize = (v) => (v ?? '').toString().toLowerCase().trim();
+
     if (activeTab.value === 'team') {
-        return props.teamTimesheets || [];
+        const rows = props.teamTimesheets || [];
+        const q = teamSearchQuery.value.toLowerCase().trim();
+
+        if (!q) return rows;
+
+        return rows.filter((record) => {
+            const userName = normalize(record.user_name);
+            const department = normalize(record.user_department);
+            const position = normalize(record.user_position);
+
+            return userName.includes(q) || department.includes(q) || position.includes(q);
+        });
     } else if (activeTab.value === 'pending') {
         return props.pendingOtApprovals || [];
     }
+
     return props.timesheets || [];
 });
 
@@ -246,17 +261,10 @@ const submitDelete = () => {
     <Head title="Attendance" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col gap-1">
-                <p class="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Attendance</p>
-                <h2 class="text-2xl font-semibold leading-tight text-foreground">Track time and attendance</h2>
-            </div>
-        </template>
-
         <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+            <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
                 <!-- Combined Today widget -->
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm w-full">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                         <div class="space-y-4">
                             <div class="flex items-center gap-3">
@@ -317,7 +325,7 @@ const submitDelete = () => {
                 </section>
 
                 <!-- Timesheets Table Section -->
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm space-y-6">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm space-y-6 w-full">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                         <!-- Left: Title / Tab controls -->
                         <div class="space-y-3">
@@ -353,6 +361,24 @@ const submitDelete = () => {
 
                         <!-- Right: Filters & Live counter -->
                         <div class="flex flex-wrap items-center gap-6 lg:justify-end">
+                            <!-- Team search (Team tab only) -->
+                            <div v-if="activeTab === 'team'" class="flex items-center gap-2">
+                                <input
+                                    v-model="teamSearchQuery"
+                                    type="text"
+                                    placeholder="Search team..."
+                                    class="rounded-xl border-border bg-background text-xs font-medium text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                                />
+                                <button
+                                    v-if="teamSearchQuery"
+                                    @click="teamSearchQuery = ''"
+                                    class="text-muted-foreground hover:text-foreground transition rounded-lg hover:bg-muted p-2"
+                                    title="Clear search"
+                                    type="button"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                             <!-- Live ticking counter -->
                             <div v-if="liveElapsed" class="flex items-center gap-2 rounded-2xl bg-muted px-4 py-2 border border-border text-sm font-semibold text-muted-foreground shadow-inner">
                                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>

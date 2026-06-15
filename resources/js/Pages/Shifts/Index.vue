@@ -407,15 +407,8 @@ onMounted(() => {
     <Head title="Shifts & Scheduling" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col gap-1">
-                <p class="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Workforce Management</p>
-                <h2 class="text-2xl font-semibold leading-tight text-foreground">Shifts & Scheduling</h2>
-            </div>
-        </template>
-
         <div class="py-6">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+            <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
                 <!-- Navigation Tabs (Admin/HR gets multiple, Employees only get Calendar view) -->
                 <div class="flex border-b border-border dark:border-zinc-800">
                     <button 
@@ -455,7 +448,7 @@ onMounted(() => {
 
                 <!-- TAB 1: SHIFT BOARD (CALENDAR) -->
                 <div v-show="activeTab === 'calendar'" class="space-y-6">
-                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40">
+                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40 w-full">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                             <div>
                                 <h3 class="text-lg font-semibold text-foreground">Shift Board</h3>
@@ -505,7 +498,7 @@ onMounted(() => {
 
                 <!-- TAB 2: SHIFT TYPES -->
                 <div v-show="activeTab === 'types'" class="space-y-6">
-                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40">
+                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40 w-full">
                         <div class="flex items-center justify-between mb-6">
                             <div>
                                 <h3 class="text-lg font-semibold text-foreground">Shift Templates</h3>
@@ -587,7 +580,7 @@ onMounted(() => {
 
                 <!-- TAB 3: WEEKLY TEMPLATES -->
                 <div v-show="activeTab === 'templates'" class="space-y-6">
-                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40">
+                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40 w-full">
                         <div class="flex items-center justify-between mb-6">
                             <div>
                                 <h3 class="text-lg font-semibold text-foreground">Weekly Recurring Templates</h3>
@@ -669,7 +662,7 @@ onMounted(() => {
                 <!-- TAB 4: MANAGE ASSIGNMENTS -->
                 <div v-show="activeTab === 'assignments'" class="space-y-6">
                     <!-- Regular Baseline Shifts -->
-                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40">
+                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40 w-full">
                         <h3 class="text-lg font-semibold text-foreground mb-4">Baseline Shift Assignments</h3>
                         <div class="overflow-x-auto rounded-2xl border border-border dark:border-zinc-800">
                             <table class="w-full text-left border-collapse text-sm">
@@ -724,7 +717,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Exceptions Overrides -->
-                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40">
+                    <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-sidebar-border dark:bg-zinc-900/40 w-full">
                         <h3 class="text-lg font-semibold text-foreground mb-4">Date-Specific Exception Overrides</h3>
                         <div class="overflow-x-auto rounded-2xl border border-border dark:border-zinc-800">
                             <table class="w-full text-left border-collapse text-sm">

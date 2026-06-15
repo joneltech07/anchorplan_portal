@@ -194,7 +194,7 @@ fetchMinistry();
     </template>
 
     <div class="py-12">
-      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+      <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
         <!-- Summary cards -->
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div class="rounded-[28px] border border-border bg-card p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/50">

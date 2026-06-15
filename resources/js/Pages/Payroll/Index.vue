@@ -22,15 +22,12 @@ const hasPeriods = computed(() => props.periods.length > 0);
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col gap-1">
-                <p class="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Payroll</p>
-                <h2 class="text-2xl font-semibold leading-tight text-foreground">Payroll management</h2>
-            </div>
+            <!-- Header removed for responsive full-width layout -->
         </template>
 
         <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
+            <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm w-full">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Generate payroll period</p>
@@ -57,7 +54,7 @@ const hasPeriods = computed(() => props.periods.length > 0);
                     </form>
                 </section>
 
-                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
+                <section class="rounded-[28px] border border-border bg-card p-6 shadow-sm w-full">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Payroll history</p>
@@ -91,7 +88,7 @@ const hasPeriods = computed(() => props.periods.length > 0);
                     </div>
                 </section>
 
-                <section v-if="hasPeriods" class="rounded-[28px] border border-border bg-card p-6 shadow-sm">
+                <section v-if="hasPeriods" class="rounded-[28px] border border-border bg-card p-6 shadow-sm w-full">
                     <p class="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">Payroll periods</p>
                     <div class="mt-5 grid gap-4 md:grid-cols-2">
                         <div v-for="period in props.periods" :key="period.id" class="rounded-3xl border border-border bg-muted p-5">
