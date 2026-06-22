@@ -55,14 +55,24 @@ class EodReportController extends Controller
             'hours_logged' => 'nullable|numeric',
             'task_ids_completed' => 'nullable|array',
             'mood_rating' => 'nullable|integer|min:1|max:5',
+            'ministry_types' => 'nullable|array',
+            'ministry_types.*' => 'string',
+            'other_description' => 'nullable|string',
         ]);
 
-        $report = EodReport::create(array_merge($data, [
+        $report = EodReport::create(array_merge(\Illuminate\Support\Arr::except($data, ['ministry_types', 'other_description']), [
             'id' => (string) Str::uuid(),
             'user_id' => $request->user()->id,
             'status' => 'submitted',
             'submitted_at' => now(),
         ]));
+
+        $this->saveMinistryInvolvements(
+            $request->user()->id,
+            $data['report_date'],
+            $data['ministry_types'] ?? [],
+            $data['other_description'] ?? null
+        );
 
         return redirect()->route('eod.show', $report->id);
     }
@@ -77,6 +87,7 @@ class EodReportController extends Controller
     public function edit(EodReport $eodReport)
     {
         abort_unless($eodReport->status === 'draft' || $eodReport->user_id === Auth::id(), 403);
+        $eodReport->load('ministryInvolvements');
         return Inertia::render('EOD/Form', ['report' => $eodReport]);
     }
 
@@ -90,11 +101,21 @@ class EodReportController extends Controller
             'task_ids_completed' => 'nullable|array',
             'mood_rating' => 'nullable|integer|min:1|max:5',
             'status' => 'nullable|in:draft,submitted',
+            'ministry_types' => 'nullable|array',
+            'ministry_types.*' => 'string',
+            'other_description' => 'nullable|string',
         ]);
 
-        $eodReport->update(array_merge($data, [
+        $eodReport->update(array_merge(\Illuminate\Support\Arr::except($data, ['ministry_types', 'other_description']), [
             'submitted_at' => isset($data['status']) && $data['status'] === 'submitted' ? now() : $eodReport->submitted_at,
         ]));
+
+        $this->saveMinistryInvolvements(
+            $eodReport->user_id,
+            $eodReport->report_date->toDateString(),
+            $data['ministry_types'] ?? [],
+            $data['other_description'] ?? null
+        );
 
         return redirect()->route('eod.show', $eodReport->id);
     }
@@ -271,6 +292,49 @@ class EodReportController extends Controller
         })->toArray();
 
         return Excel::download(new EodReportsExport($rows), 'eod-reports-' . now()->format('Y-m-d_His') . '.xlsx');
+    }
+
+    private function saveMinistryInvolvements($userId, $reportDate, array $ministryTypes, ?string $otherDescription)
+    {
+        // If the UI sent both 'none' and real ministries, keep only the real ones.
+        if (in_array('none', $ministryTypes, true) && count(array_filter($ministryTypes, fn ($v) => $v !== 'none')) > 0) {
+            $ministryTypes = array_values(array_filter($ministryTypes, fn ($v) => $v !== 'none'));
+        }
+
+        if (in_array('none', $ministryTypes, true) && count($ministryTypes) === 1) {
+            \App\Models\MinistryInvolvement::where('user_id', $userId)
+                ->where('eod_date', $reportDate)
+                ->delete();
+            return;
+        }
+
+        \App\Models\MinistryInvolvement::where('user_id', $userId)
+            ->where('eod_date', $reportDate)
+            ->delete();
+
+        foreach ($ministryTypes as $type) {
+            if ($type === 'other') {
+                \App\Models\MinistryInvolvement::create([
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'user_id' => $userId,
+                    'eod_date' => $reportDate,
+                    'ministry_type' => 'other',
+                    'custom_description' => $otherDescription,
+                ]);
+                continue;
+            }
+
+            if ($type === 'none') {
+                continue;
+            }
+
+            \App\Models\MinistryInvolvement::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'user_id' => $userId,
+                'eod_date' => $reportDate,
+                'ministry_type' => $type,
+            ]);
+        }
     }
 }
 

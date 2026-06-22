@@ -50,7 +50,39 @@ class EodReport extends Model
 
     public function ministryInvolvements()
     {
-        return $this->hasMany(MinistryInvolvement::class, 'user_id', 'user_id')->whereColumn('eod_date', 'report_date');
+        // EOD report belongs to a user and a report_date.
+        // Ministry selections are stored per (user_id, eod_date).
+        return $this->hasMany(MinistryInvolvement::class, 'user_id', 'user_id');
+    }
+
+    public function getMinistryInvolvementsAttribute()
+    {
+        if ($this->relationLoaded('ministryInvolvements')) {
+            $collection = $this->getRelation('ministryInvolvements');
+        } else {
+            $collection = $this->ministryInvolvements()
+                ->where('eod_date', $this->report_date)
+                ->get();
+            $this->setRelation('ministryInvolvements', $collection);
+            return $collection;
+        }
+
+        $reportDate = $this->report_date ? $this->report_date->toDateString() : null;
+
+        return $collection->filter(function ($item) use ($reportDate) {
+            return $item->eod_date && $item->eod_date->toDateString() === $reportDate;
+        });
+    }
+
+    public function toArray()
+    {
+        $attributes = parent::toArray();
+
+        if ($this->relationLoaded('ministryInvolvements')) {
+            $attributes['ministry_involvements'] = $this->ministry_involvements->values()->toArray();
+        }
+
+        return $attributes;
     }
 
     // Scopes

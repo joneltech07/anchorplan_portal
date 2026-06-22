@@ -12,6 +12,9 @@ class MinistryInvolvement extends Model
 
     protected $table = 'ministry_involvement';
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'id',
         'user_id',

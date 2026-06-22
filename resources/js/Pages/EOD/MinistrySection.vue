@@ -51,6 +51,13 @@ watch(
   }
 );
 
+watch(
+  () => props.otherDescription,
+  (v) => {
+    otherDescription.value = v ?? '';
+  }
+);
+
 watch(selected, (v) => {
   // If none is selected, clear all others
   if (v.includes('none')) {

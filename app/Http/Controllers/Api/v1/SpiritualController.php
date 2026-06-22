@@ -395,13 +395,21 @@ $wednesdayAttended = WednesdayPrayerRecord::whereIn('wednesday_date', $wednesday
 
         $selected = $data['ministry_types'] ?? [];
 
-        if (in_array('none', $selected, true)) {
+        // If the UI sent both 'none' and real ministries, keep only the real ones.
+        // This prevents the edit form from showing the special "none" checkbox when the
+        // user actually selected a real ministry.
+        if (in_array('none', $selected, true) && count(array_filter($selected, fn ($v) => $v !== 'none')) > 0) {
+            $selected = array_values(array_filter($selected, fn ($v) => $v !== 'none'));
+        }
+
+        if (in_array('none', $selected, true) && count($selected) === 1) {
             MinistryInvolvement::where('user_id', $request->user()->id)
                 ->where('eod_date', $data['report_date'])
                 ->delete();
 
             return response()->json(['message' => 'No ministry selected']);
         }
+
 
         $otherDesc = $data['other_description'] ?? null;
 
@@ -429,10 +437,9 @@ $wednesdayAttended = WednesdayPrayerRecord::whereIn('wednesday_date', $wednesday
 
             MinistryInvolvement::create([
                 'id' => (string) Str::uuid(),
-                    'id' => (string) Str::uuid(),
-                    'user_id' => $request->user()->id,
-                    'eod_date' => $data['report_date'],
-                    'ministry_type' => $type,
+                'user_id' => $request->user()->id,
+                'eod_date' => $data['report_date'],
+                'ministry_type' => $type,
             ]);
 
 

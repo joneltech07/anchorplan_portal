@@ -14,59 +14,64 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import MinistrySection from '@/pages/EOD/MinistrySection.vue';
 
 
-const form = useForm({
-    report_date: new Date().toISOString().slice(0,10),
-    accomplishments: '',
-    tomorrow_plan: '',
-    blockers: '',
-    hours_logged: '',
-    task_ids_completed: [],
-    mood_rating: 3,
-
-    // Spiritual / Ministry involvement
-ministry_types: ['none'],
-other_description: '',
+const props = defineProps({
+    report: Object,
 });
 
-const submit = async () => {
-    // Existing EOD submission
-    const resp = await form.post(route('eod.store'));
+const report = props.report ?? null;
 
-    // Persist ministry involvement via API (Pastoral Lead module requirement)
-    // Note: if your backend EOD store already returns a report id, we can include it; otherwise API uses user_id+date.
-    // Use non-API (web/auth) axios endpoint instead of /api/v1 to avoid unauth issues
-    // (Laravel will use the authenticated session)
-    try {
-        await axios.post(route('eod.ministry.store'), {
+const form = useForm({
+    // For edit prefill: backend sends report.ministryInvolvements including ministry_type
+    // MinistrySection 'none' should only be selected when the saved selections truly are none.
 
+    report_date: props.report?.report_date ? new Date(props.report.report_date).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+    accomplishments: props.report?.accomplishments ?? '',
+    tomorrow_plan: props.report?.tomorrow_plan ?? '',
+    blockers: props.report?.blockers ?? '',
+    hours_logged: props.report?.hours_logged ?? '',
+    task_ids_completed: props.report?.task_ids_completed ?? [],
+    mood_rating: props.report?.mood_rating ?? 3,
 
+    // Spiritual / Ministry involvement
+    ministry_types: (() => {
+        const relation = props.report?.ministry_involvements ?? props.report?.ministryInvolvements;
+        const ministries = relation?.length
+            ? relation.map((m) => m.ministry_type)
+            : [];
 
+        // The MinistrySection treats 'none' as a special case. If the saved data
+        // contains both 'none' and real options, prefer the real options.
+        if (ministries.includes('none')) {
+            const real = ministries.filter((x) => x !== 'none');
+            if (real.length) return real;
+            return ['none'];
+        }
 
+        return ministries.length ? ministries : ['none'];
+    })(),
+    other_description: (() => {
+        const relation = props.report?.ministry_involvements ?? props.report?.ministryInvolvements;
+        if (!relation) return '';
+        const otherMin = relation.find(m => m.ministry_type === 'other');
+        return otherMin ? (otherMin.custom_description ?? '') : '';
+    })(),
+});
 
-
-
-
-            // If your server is not mounted under /api, also consider using route('...')
-
-            report_date: form.report_date,
-            ministry_types: form.ministry_types,
-            other_description: form.other_description,
-        });
-    } catch (e) {
-        // non-blocking; EOD already saved
-        console.error('Failed to save ministry involvement', e);
+const submit = () => {
+    if (props.report?.id) {
+        form.put(route('eod.update', props.report.id));
+    } else {
+        form.post(route('eod.store'));
     }
-
-    return resp;
 };
 </script>
 
 <template>
-    <Head title="Create EOD" />
+    <Head :title="props.report?.id ? 'Edit EOD' : 'Create EOD'" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-foreground">Submit End of Day</h2>
+            <h2 class="text-xl font-semibold leading-tight text-foreground">{{ props.report?.id ? 'Edit End of Day' : 'Submit End of Day' }}</h2>
         </template>
 
         <div class="py-12">

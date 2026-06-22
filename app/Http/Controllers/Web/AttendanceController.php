@@ -89,7 +89,7 @@ class AttendanceController extends Controller
             $payment = $record->getEstimatedPayment();
             $status = $record->getTimesheetStatus();
 
-            $dateFormatted = Carbon::parse($record->date)->format('Y-m-d l');
+            $dateFormatted = Carbon::parse($record->date)->format('M-d-Y l');
 
             $actualDuration = $record->clock_out_time 
                 ? $record->formatDurationSeconds(abs(Carbon::parse($record->clock_out_time)->diffInSeconds(Carbon::parse($record->clock_in_time))))
