@@ -32,9 +32,30 @@ class EodReportController extends Controller
             $role = 'manager';
         }
 
+        $canViewTeamEod = $user->hasAnyRole(['super_admin', 'general_manager', 'hr_manager', 'department_manager', 'pastoral_lead', 'executive_assistant']);
+
+        $departments = [];
+        $employees = [];
+
+        if ($canViewTeamEod) {
+            $departments = \App\Models\User::whereNotNull('department')
+                ->where('department', '!=', '')
+                ->distinct()
+                ->orderBy('department')
+                ->pluck('department')
+                ->toArray();
+
+            $employees = \App\Models\User::orderBy('name')
+                ->get(['id', 'name', 'department'])
+                ->toArray();
+        }
+
         return Inertia::render('EOD/Dashboard', [
             'role' => $role,
             'reports' => $reports,
+            'canViewTeamEod' => $canViewTeamEod,
+            'departments' => $departments,
+            'employees' => $employees,
         ]);
     }
 
@@ -211,6 +232,14 @@ class EodReportController extends Controller
             ->paginate($perPage, ['*'], 'page', $page);
 
         $paginator->getCollection()->transform(function ($report) {
+            $formattedMinistries = $report->ministryInvolvements?->map(function ($involvement) {
+                if ($involvement->ministry_type === 'other') {
+                    return $involvement->custom_description ?? 'Other';
+                }
+                $formatted = str_replace('_', ' ', $involvement->ministry_type);
+                return ucwords($formatted);
+            })->toArray() ?? [];
+
             return [
                 'id' => $report->id,
                 'employee_name' => $report->user?->name ?? '',
@@ -220,7 +249,7 @@ class EodReportController extends Controller
                 'accomplishments' => Str::limit((string) ($report->accomplishments ?? ''), 100),
                 'tomorrow_plan' => Str::limit((string) ($report->tomorrow_plan ?? ''), 100),
                 'blockers' => (string) ($report->blockers ?? ''),
-                'ministries' => $report->ministryInvolvements?->pluck('ministry_type')->toArray() ?? [],
+                'ministries' => $formattedMinistries,
                 'status' => (string) ($report->status ?? ''),
                 'submitted_at' => $report->submitted_at?->format('Y-m-d H:i'),
                 'hours_logged' => $report->hours_logged,
@@ -274,8 +303,15 @@ class EodReportController extends Controller
         $reports = $query->orderBy('report_date', 'desc')->get();
 
         $rows = $reports->map(function ($report) {
+            $formattedMinistries = $report->ministryInvolvements?->map(function ($involvement) {
+                if ($involvement->ministry_type === 'other') {
+                    return $involvement->custom_description ?? 'Other';
+                }
+                $formatted = str_replace('_', ' ', $involvement->ministry_type);
+                return ucwords($formatted);
+            })->toArray() ?? [];
+
             return [
-                'id' => $report->id,
                 'employee_name' => $report->user?->name ?? '',
                 'department' => $report->user?->department ?? '',
                 'position' => $report->user?->position ?? '',
@@ -283,11 +319,8 @@ class EodReportController extends Controller
                 'accomplishments' => (string) ($report->accomplishments ?? ''),
                 'tomorrow_plan' => (string) ($report->tomorrow_plan ?? ''),
                 'blockers' => (string) ($report->blockers ?? ''),
-                'ministries' => $report->ministryInvolvements?->pluck('ministry_type')->toArray() ?? [],
-                'status' => (string) ($report->status ?? ''),
+                'ministries' => $formattedMinistries,
                 'submitted_at' => $report->submitted_at?->format('Y-m-d H:i'),
-                'hours_logged' => $report->hours_logged,
-                'mood_rating' => $report->mood_rating,
             ];
         })->toArray();
 
